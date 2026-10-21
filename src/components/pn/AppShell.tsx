@@ -50,7 +50,7 @@ export function AppShell({ screen, children, fill }: { screen: string; children:
   const { data: m } = useMission();
   return (
     <div className={cn("flex flex-col", fill ? "h-screen overflow-hidden" : "min-h-screen")}>
-      <header className="no-print z-[1100] bg-navy text-navy-foreground shadow-md">
+      <header className="no-print relative z-40 bg-navy text-navy-foreground shadow-md">
         <div className="flex items-center gap-6 px-6 py-3">
           <Link to="/" aria-label="PelaNode home">
             <Wordmark />

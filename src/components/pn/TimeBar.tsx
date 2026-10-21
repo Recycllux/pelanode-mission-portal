@@ -53,7 +53,7 @@ export function TimeBar({ onSelectEvent }: { onSelectEvent?: (id: string) => voi
           <SelectTrigger className="h-10 w-40" aria-label="Replay speed">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="z-[1200]">
+          <SelectContent>
             {SPEEDS.map((s) => (
               <SelectItem key={s.value} value={String(s.value)}>
                 {s.label}

@@ -75,7 +75,7 @@ function ReviewControls({ event }: { event: Event }) {
             <SelectTrigger className="h-10 w-64" aria-label="New label">
               <SelectValue placeholder="Choose new label" />
             </SelectTrigger>
-            <SelectContent className="z-[1200]">
+            <SelectContent>
               {LABELS.filter((l) => l !== event.model_output.class).map((l) => (
                 <SelectItem key={l} value={l}>{humanize(l)}</SelectItem>
               ))}
