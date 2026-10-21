@@ -10,33 +10,167 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as ContextRouteImport } from './routes/context'
+import { Route as DualVisionRouteImport } from './routes/dual-vision'
+import { Route as NodesRouteImport } from './routes/nodes'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as EventsIndexRouteImport } from './routes/events.index'
+import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
+import { Route as ReportsIndexRouteImport } from './routes/reports.index'
+import { Route as ReportsPrintRouteImport } from './routes/reports.print'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContextRoute = ContextRouteImport.update({
+  id: '/context',
+  path: '/context',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DualVisionRoute = DualVisionRouteImport.update({
+  id: '/dual-vision',
+  path: '/dual-vision',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NodesRoute = NodesRouteImport.update({
+  id: '/nodes',
+  path: '/nodes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsEventIdRoute = EventsEventIdRouteImport.update({
+  id: '/events/$eventId',
+  path: '/events/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsIndexRoute = ReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsPrintRoute = ReportsPrintRouteImport.update({
+  id: '/reports/print',
+  path: '/reports/print',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/analytics': typeof AnalyticsRoute
+  '/context': typeof ContextRoute
+  '/dual-vision': typeof DualVisionRoute
+  '/nodes': typeof NodesRoute
+  '/settings': typeof SettingsRoute
+  '/events/$eventId': typeof EventsEventIdRoute
+  '/reports/print': typeof ReportsPrintRoute
+  '/events/': typeof EventsIndexRoute
+  '/reports/': typeof ReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/analytics': typeof AnalyticsRoute
+  '/context': typeof ContextRoute
+  '/dual-vision': typeof DualVisionRoute
+  '/nodes': typeof NodesRoute
+  '/settings': typeof SettingsRoute
+  '/events/$eventId': typeof EventsEventIdRoute
+  '/reports/print': typeof ReportsPrintRoute
+  '/events': typeof EventsIndexRoute
+  '/reports': typeof ReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/analytics': typeof AnalyticsRoute
+  '/context': typeof ContextRoute
+  '/dual-vision': typeof DualVisionRoute
+  '/nodes': typeof NodesRoute
+  '/settings': typeof SettingsRoute
+  '/events/$eventId': typeof EventsEventIdRoute
+  '/reports/print': typeof ReportsPrintRoute
+  '/events/': typeof EventsIndexRoute
+  '/reports/': typeof ReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/analytics'
+    | '/context'
+    | '/dual-vision'
+    | '/nodes'
+    | '/settings'
+    | '/events/$eventId'
+    | '/reports/print'
+    | '/events/'
+    | '/reports/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/analytics'
+    | '/context'
+    | '/dual-vision'
+    | '/nodes'
+    | '/settings'
+    | '/events/$eventId'
+    | '/reports/print'
+    | '/events'
+    | '/reports'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/analytics'
+    | '/context'
+    | '/dual-vision'
+    | '/nodes'
+    | '/settings'
+    | '/events/$eventId'
+    | '/reports/print'
+    | '/events/'
+    | '/reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  AnalyticsRoute: typeof AnalyticsRoute
+  ContextRoute: typeof ContextRoute
+  DualVisionRoute: typeof DualVisionRoute
+  NodesRoute: typeof NodesRoute
+  SettingsRoute: typeof SettingsRoute
+  EventsEventIdRoute: typeof EventsEventIdRoute
+  ReportsPrintRoute: typeof ReportsPrintRoute
+  EventsIndexRoute: typeof EventsIndexRoute
+  ReportsIndexRoute: typeof ReportsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +182,91 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/context': {
+      id: '/context'
+      path: '/context'
+      fullPath: '/context'
+      preLoaderRoute: typeof ContextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dual-vision': {
+      id: '/dual-vision'
+      path: '/dual-vision'
+      fullPath: '/dual-vision'
+      preLoaderRoute: typeof DualVisionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nodes': {
+      id: '/nodes'
+      path: '/nodes'
+      fullPath: '/nodes'
+      preLoaderRoute: typeof NodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events/': {
+      id: '/events/'
+      path: '/events'
+      fullPath: '/events/'
+      preLoaderRoute: typeof EventsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events/$eventId': {
+      id: '/events/$eventId'
+      path: '/events/$eventId'
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof EventsEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports/': {
+      id: '/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof ReportsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports/print': {
+      id: '/reports/print'
+      path: '/reports/print'
+      fullPath: '/reports/print'
+      preLoaderRoute: typeof ReportsPrintRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  AnalyticsRoute: AnalyticsRoute,
+  ContextRoute: ContextRoute,
+  DualVisionRoute: DualVisionRoute,
+  NodesRoute: NodesRoute,
+  SettingsRoute: SettingsRoute,
+  EventsEventIdRoute: EventsEventIdRoute,
+  ReportsPrintRoute: ReportsPrintRoute,
+  EventsIndexRoute: EventsIndexRoute,
+  ReportsIndexRoute: ReportsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
