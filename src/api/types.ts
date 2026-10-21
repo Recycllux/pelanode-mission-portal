@@ -142,8 +142,8 @@ export interface EventSummary {
 
 export interface ReviewRequest {
   action: ReviewAction;
-  new_label?: string;
-  note?: string;
+  new_label?: string | undefined;
+  note?: string | undefined;
   reviewer: string;
   request_id: string;
 }
@@ -191,8 +191,8 @@ export interface ReplayStatus {
 
 export interface ReplayCommand {
   action: "start" | "pause" | "resume" | "seek" | "speed";
-  to?: string;
-  speed?: number;
+  to?: string | undefined;
+  speed?: number | undefined;
 }
 
 export interface ReportSummary {

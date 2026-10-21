@@ -3,7 +3,7 @@ import type { EventSummary, MissionContext } from "@/api/types";
 import { fmtUtc } from "@/lib/pn-format";
 import { SourceChip } from "./chips";
 
-export function ContextChart({ context, events, until, missionStart, missionEnd, height = 220, onSelectEvent }: { context?: MissionContext; events: EventSummary[]; until?: string; missionStart?: string; missionEnd?: string; height?: number; onSelectEvent?: (id: string) => void }) {
+export function ContextChart({ context, events, until, missionStart, missionEnd, height = 220, onSelectEvent }: { context?: MissionContext | undefined; events: EventSummary[]; until?: string | undefined; missionStart?: string | undefined; missionEnd?: string | undefined; height?: number; onSelectEvent?: (id: string) => void }) {
   const u = until ? Date.parse(until) : Infinity;
   const byTime = new Map<number, { t: number; discharge?: number; level?: number }>();
   for (const r of context?.records ?? []) {

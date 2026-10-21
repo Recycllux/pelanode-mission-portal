@@ -16,14 +16,14 @@ export interface MapLayers {
 export interface MissionMapProps {
   track: TrackPoint[];
   events: EventSummary[];
-  datasets?: ContextDataset[];
-  latest?: Record<string, ContextRecord | undefined>;
-  layers?: MapLayers;
-  selectedId?: string;
-  focus?: { lat: number; lon: number; key: string } | null;
-  onSelectEvent?: (id: string) => void;
-  interactive?: boolean;
-  fitAll?: boolean;
+  datasets?: ContextDataset[] | undefined;
+  latest?: Record<string, ContextRecord | undefined> | undefined;
+  layers?: MapLayers | undefined;
+  selectedId?: string | undefined;
+  focus?: { lat: number; lon: number; key: string } | null | undefined;
+  onSelectEvent?: (id: string) => void | undefined;
+  interactive?: boolean | undefined;
+  fitAll?: boolean | undefined;
 }
 
 const TEAL_TRACK = "var(--teal)";
@@ -57,7 +57,7 @@ const stationIcon = L.divIcon({
   html: `<svg width="22" height="22" viewBox="0 0 22 22"><rect class="pn-station" x="3" y="3" width="16" height="16" rx="3"/></svg>`,
 });
 
-function Controller({ focus, track, fitAll }: { focus?: MissionMapProps["focus"]; track: TrackPoint[]; fitAll?: boolean }) {
+function Controller({ focus, track, fitAll }: { focus?: MissionMapProps["focus"]; track: TrackPoint[]; fitAll?: boolean | undefined }) {
   const map = useMap();
   useEffect(() => {
     if (focus) map.flyTo([focus.lat, focus.lon], Math.max(map.getZoom(), 16), { duration: 0.6 });

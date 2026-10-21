@@ -146,12 +146,12 @@ export class MockApi implements PelaApi {
     return clone(e);
   }
 
-  async getContext() {
+  async getContext(_id?: string) {
     await this.delay();
     return clone({ datasets: DATASETS, records: this.records });
   }
 
-  async getNodeStatus() {
+  async getNodeStatus(_nodeId?: string, _missionId?: string) {
     await this.delay();
     const min = (this.missionMs() - START_MS) / MIN;
     return {
@@ -162,7 +162,7 @@ export class MockApi implements PelaApi {
     };
   }
 
-  async getReplay() {
+  async getReplay(_id?: string) {
     await this.delay(); 
     return this.status();
   }
@@ -214,7 +214,7 @@ export class MockApi implements PelaApi {
     const m = await this.getMission(id);
     const tr = this.track.filter((p) => Date.parse(p.t) <= t);
     let km = 0;
-    for (let i = 1; i < tr.length; i++) km += haversineKm(tr[i - 1].lat, tr[i - 1].lon, tr[i].lat, tr[i].lon);
+    for (let i = 1; i < tr.length; i++) km += haversineKm(tr[i - 1]!.lat, tr[i - 1]!.lon, tr[i]!.lat, tr[i]!.lon);
     return {
       mission_id: id,
       name: m.name,
@@ -259,7 +259,7 @@ export class MockApi implements PelaApi {
     return { file_uri: URL.createObjectURL(blob) };
   }
 
-  async resetDemo() {
+  async resetDemo(_missionId?: string) {
     await this.delay();
     this.reset();
   }

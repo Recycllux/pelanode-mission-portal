@@ -15,7 +15,7 @@ import { useEvents, useMission, useMissionContext, useMissionTime, useNodeStatus
 import { eventTitle, fmtDuration, fmtNum, fmtUtc, reviewTone, sortReviewQueue } from "@/lib/pn-format";
 
 export const Route = createFileRoute("/")({
-  validateSearch: (s: Record<string, unknown>): { event?: string } => (typeof s.event === "string" ? { event: s.event } : {}),
+  validateSearch: (s: Record<string, unknown>): { event?: string } => (typeof s["event"] === "string" ? { event: s["event"] } : {}),
   head: () => ({
     meta: [
       { title: "Mission Map — PelaNode Intelligence Portal" },
@@ -63,7 +63,7 @@ function MissionMapPage() {
 
   const distanceKm = useMemo(() => {
     let d = 0;
-    for (let i = 1; i < track.length; i++) d += haversineKm(track[i - 1].lat, track[i - 1].lon, track[i].lat, track[i].lon);
+    for (let i = 1; i < track.length; i++) d += haversineKm(track[i - 1]!.lat, track[i - 1]!.lon, track[i]!.lat, track[i]!.lon);
     return d;
   }, [track]);
 

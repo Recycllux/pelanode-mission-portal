@@ -86,8 +86,8 @@ export function TimeBar({ onSelectEvent }: { onSelectEvent?: (id: string) => voi
           max={end}
           step={1000}
           value={[value]}
-          onValueChange={([v]) => setDrag(v)}
-          onValueCommit={([v]) => ctl.mutate({ action: "seek", to: new Date(v).toISOString() })}
+          onValueChange={([v]) => setDrag(v ?? null)}
+          onValueCommit={([v]) => v !== undefined && ctl.mutate({ action: "seek", to: new Date(v).toISOString() })}
           aria-label="Mission time scrubber"
         />
         <div className="mt-1 flex justify-between text-xs text-muted-foreground tabular">

@@ -31,9 +31,9 @@ export function buildTrack(): TrackPoint[] {
     });
   }
   for (let i = 0; i < pts.length; i++) {
-    const a = pts[i];
-    const b = pts[Math.min(i + 1, pts.length - 1)];
-    const p = i === pts.length - 1 ? pts[i - 1] : a;
+    const a = pts[i]!;
+    const b = pts[Math.min(i + 1, pts.length - 1)]!;
+    const p = i === pts.length - 1 ? pts[i - 1]! : a;
     const q = i === pts.length - 1 ? a : b;
     const dy = q.lat - p.lat;
     const dx = (q.lon - p.lon) * Math.cos((q.lat * Math.PI) / 180);
@@ -88,7 +88,7 @@ export function buildContextRecords(): ContextRecord[] {
     out.push({
       dataset_id: "sim_hydro_discharge",
       variable: "discharge",
-      value: DISCHARGE[h],
+      value: DISCHARGE[h]!,
       unit: "m3/s",
       observed_at,
       station_name: "Simulated station 1",
@@ -97,7 +97,7 @@ export function buildContextRecords(): ContextRecord[] {
     out.push({
       dataset_id: "sim_hydro_level",
       variable: "water_level",
-      value: LEVEL[h],
+      value: LEVEL[h]!,
       unit: "m",
       observed_at,
       station_name: "Simulated station 2",
@@ -143,7 +143,7 @@ const SEEDS: EventSeed[] = [
 
 export function buildEvents(track: TrackPoint[], records: ContextRecord[]): Event[] {
   return SEEDS.map((s) => {
-    const p = track[s.minute];
+    const p = track[s.minute]!;
     const captured = START_MS + s.minute * MIN;
     const isAbove = s.perspective === "above";
     const context = DATASETS.map((ds) => {
