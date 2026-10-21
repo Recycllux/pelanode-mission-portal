@@ -1,0 +1,41 @@
+import type {
+  Event,
+  EventSummary,
+  ExportFormat,
+  ExportResult,
+  Mission,
+  MissionContext,
+  NodeStatus,
+  ReplayCommand,
+  ReplayStatus,
+  ReportSummary,
+  ReviewRequest,
+  TrackPoint,
+} from "./types";
+
+export interface PelaApi {
+  readonly kind: "http" | "mock";
+  getMission(id: string): Promise<Mission>;
+  getTrack(id: string, until: string): Promise<TrackPoint[]>;
+  listEvents(missionId: string, until: string): Promise<EventSummary[]>;
+  getEvent(id: string): Promise<Event>;
+  reviewEvent(id: string, body: ReviewRequest): Promise<Event>;
+  getContext(id: string): Promise<MissionContext>;
+  getNodeStatus(nodeId: string, missionId: string): Promise<NodeStatus>;
+  getReplay(id: string): Promise<ReplayStatus>;
+  controlReplay(id: string, cmd: ReplayCommand): Promise<ReplayStatus>;
+  getReport(id: string): Promise<ReportSummary>;
+  exportReport(id: string, format: ExportFormat): Promise<ExportResult>;
+  resetDemo(missionId: string): Promise<void>;
+  /** Resolve a /media/... URI to a loadable URL, or null when no real frame exists. */
+  mediaUrl(uri: string | null): string | null;
+  /** Resolve an export file_uri to an openable URL. */
+  fileUrl(uri: string): string;
+}
+
+export const PN_KEY_STORAGE = "pn_key";
+
+export function getPnKey(): string {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(PN_KEY_STORAGE) ?? "";
+}
