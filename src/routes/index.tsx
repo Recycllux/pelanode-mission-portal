@@ -124,7 +124,7 @@ function MissionMapPage() {
               <span className="flex items-center gap-1"><EventGlyph perspective="below" tone="unreviewed" confidence={1} size={14} /> Below water</span>
               <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="required" confidence={1} size={14} /> Review required</span>
               <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="confirmed" confidence={1} size={14} /> Confirmed</span>
-              <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="low" as never confidence={0.3} size={14} /> Low confidence (hollow)</span>
+              <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="unreviewed" confidence={0.3} size={14} /> Low confidence (hollow)</span>
             </div>
           </div>
 
