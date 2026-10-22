@@ -1,7 +1,7 @@
 // Browser-only: imports Leaflet. Load via React.lazy behind <ClientOnly>.
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { ContextDataset, ContextRecord, EventSummary, TrackPoint } from "@/api/types";
 import { LOW_CONFIDENCE, fmtNum, fmtUtc, humanize, reviewTone } from "@/lib/pn-format";
@@ -24,6 +24,8 @@ export interface MissionMapProps {
   onSelectEvent?: (id: string) => void | undefined;
   interactive?: boolean | undefined;
   fitAll?: boolean | undefined;
+  /** Mission area [min_lon,min_lat,max_lon,max_lat]; the map fits it plus context stations once on open. */
+  initialBbox?: [number, number, number, number] | undefined;
 }
 
 const TEAL_TRACK = "var(--teal)";
@@ -57,8 +59,17 @@ const stationIcon = L.divIcon({
   html: `<svg width="22" height="22" viewBox="0 0 22 22"><rect class="pn-station" x="3" y="3" width="16" height="16" rx="3"/></svg>`,
 });
 
-function Controller({ focus, track, fitAll }: { focus?: MissionMapProps["focus"]; track: TrackPoint[]; fitAll?: boolean | undefined }) {
+function Controller({ focus, track, fitAll, initialBbox, datasets }: { focus?: MissionMapProps["focus"]; track: TrackPoint[]; fitAll?: boolean | undefined; initialBbox?: MissionMapProps["initialBbox"]; datasets: ContextDataset[] }) {
   const map = useMap();
+  const fitted = useRef(false);
+  useEffect(() => {
+    if (fitted.current || !initialBbox || datasets.length === 0) return;
+    fitted.current = true;
+    const [minLon, minLat, maxLon, maxLat] = initialBbox;
+    const b = L.latLngBounds([minLat, minLon], [maxLat, maxLon]);
+    for (const d of datasets) b.extend([d.lat, d.lon]);
+    map.fitBounds(b, { padding: [40, 40] });
+  }, [initialBbox, datasets]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (focus) map.flyTo([focus.lat, focus.lon], Math.max(map.getZoom(), 16), { duration: 0.6 });
   }, [focus?.key]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -68,7 +79,7 @@ function Controller({ focus, track, fitAll }: { focus?: MissionMapProps["focus"]
   return null;
 }
 
-export default function MissionMap({ track, events, datasets = [], latest = {}, layers = { track: true, events: true, discharge: false, level: false }, selectedId, focus, onSelectEvent, interactive = true, fitAll }: MissionMapProps) {
+export default function MissionMap({ track, events, datasets = [], latest = {}, layers = { track: true, events: true, discharge: false, level: false }, selectedId, focus, onSelectEvent, interactive = true, fitAll, initialBbox }: MissionMapProps) {
   const positions = useMemo(() => track.map((p) => [p.lat, p.lon] as [number, number]), [track]);
   const head = track.at(-1);
 
@@ -84,7 +95,7 @@ export default function MissionMap({ track, events, datasets = [], latest = {}, 
       attributionControl
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" maxZoom={19} />
-      <Controller focus={focus} track={track} fitAll={fitAll} />
+      <Controller focus={focus} track={track} fitAll={fitAll} initialBbox={initialBbox} datasets={datasets} />
       {layers.track && positions.length > 1 && <Polyline positions={positions} pathOptions={{ color: TEAL_TRACK, weight: 5, opacity: 0.9 }} />}
       {layers.events &&
         events.map((e) => (

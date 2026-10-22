@@ -90,7 +90,7 @@ function MissionMapPage() {
       <div className="flex h-full flex-col">
         <div className="flex min-h-0 flex-1">
           <div className="relative isolate min-w-0 flex-1">
-            <LazyMap track={track} events={events} datasets={ctx?.datasets} latest={latest} layers={layers} selectedId={selectedId} focus={focus} onSelectEvent={select} />
+            <LazyMap initialBbox={mission?.area_bbox} track={track} events={events} datasets={ctx?.datasets} latest={latest} layers={layers} selectedId={selectedId} focus={focus} onSelectEvent={select} />
 
             <div className="absolute left-14 top-3 z-[500] w-64 rounded-lg border bg-card/95 p-3 shadow-lg backdrop-blur">
               <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Layers</h2>
