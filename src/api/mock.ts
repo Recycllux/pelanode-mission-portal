@@ -140,7 +140,8 @@ export class MockApi implements PelaApi {
         current_label: body.action === "relabel" ? (body.new_label ?? null) : body.action === "confirm" ? e.model_output.class : body.action === "leave_open" ? e.review.current_label : null,
         last_action: body.action,
         by: body.reviewer,
-        at: new Date(this.missionMs()).toISOString(),
+        at: new Date(this.now()).toISOString(),
+        mission_time: new Date(this.missionMs()).toISOString(),
         note: body.note ?? null,
       };
     }

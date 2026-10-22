@@ -118,7 +118,10 @@ export interface Review {
   current_label: string | null;
   last_action: ReviewAction | null;
   by: string | null;
+  /** Real wall-clock time when the reviewer clicked. */
   at: string | null;
+  /** Replay mission time at that moment (null if unknown). */
+  mission_time?: string | null;
   note?: string | null;
 }
 

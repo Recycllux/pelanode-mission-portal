@@ -168,7 +168,17 @@ export function EventDetailView({ eventId, onNavigate, onShowOnMap, compact }: {
                 <Fact k="Decision" v={humanize(e.review.last_action)} />
                 <Fact k="Current label" v={humanize(e.review.current_label)} />
                 <Fact k="Reviewer" v={e.review.by ?? "—"} />
-                <Fact k="At (mission time)" v={fmtUtc(e.review.at)} />
+                <Fact
+                  k={e.review.mission_time ? "At (mission time)" : "At (real time)"}
+                  v={
+                    <>
+                      {fmtUtc(e.review.mission_time ?? e.review.at)}
+                      {e.review.mission_time && (
+                        <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Recorded at {fmtUtc(e.review.at)} (real time)</span>
+                      )}
+                    </>
+                  }
+                />
                 {e.review.note && <div className="col-span-2"><Fact k="Note" v={e.review.note} /></div>}
                 <div className="col-span-2 text-xs text-muted-foreground">Model said: <strong>{humanize(mo.class)}</strong> ({mo.confidence.toFixed(2)}) → Reviewer: <strong>{humanize(e.review.current_label ?? e.review.status)}</strong></div>
               </div>
