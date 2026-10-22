@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Event, ReviewAction } from "@/api/types";
 import { useEvent, useEvents, useReviewEvent } from "@/hooks/use-mission";
 import { cn } from "@/lib/utils";
-import { fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, eventTitle, perspectiveLabel, reviewTone, systemSummary, uuid } from "@/lib/pn-format";
+import { RELATION_LABEL, fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, eventTitle, perspectiveLabel, reviewTone, systemSummary, uuid } from "@/lib/pn-format";
 import { ConfidenceText, EventGlyph, ReviewBadge, SourceChip } from "./chips";
 import { EvidenceFrame } from "./EvidenceFrame";
 
@@ -147,7 +147,7 @@ export function EventDetailView({ eventId, onNavigate, onShowOnMap, compact }: {
             <dl className="grid grid-cols-2 gap-3">
               <Fact k="Observation" v={e.observation.observation_id} />
               <Fact k="Sensor" v={humanize(e.observation.source_sensor)} />
-              <Fact k="Frame" v={e.observation.evidence.frame_uri ?? "—"} />
+              <Fact k="Frame" v={e.observation.evidence.frame_uri ?? "Frame TBD"} />
               <Fact k="Device at capture" v={`Battery ${e.device.battery_pct}% · ${e.device.connectivity} · storage ${e.device.storage_pct}%`} />
             </dl>
           </Layer>
@@ -191,7 +191,7 @@ export function EventDetailView({ eventId, onNavigate, onShowOnMap, compact }: {
                   </div>
                   <div className="mt-2 flex items-center gap-2 text-xs">
                     <SourceChip source={c.provenance} />
-                    <span className="font-semibold">Coincides with — association only, not cause</span>
+                    <span className="font-semibold">{RELATION_LABEL[c.relation]} — association only, not cause</span>
                   </div>
                 </li>
               ))}

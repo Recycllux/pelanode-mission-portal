@@ -41,10 +41,10 @@ const TONE_STYLE: Record<ReviewTone, string> = {
   required: "bg-review-soft text-review border-review/30",
   unreviewed: "bg-navy-soft text-navy border-navy/20",
   confirmed: "bg-teal-soft text-teal border-teal/30",
-  rejected: "bg-muted text-lowconf border-border",
+  dismissed: "bg-muted text-lowconf border-border",
   relabelled: "bg-relabel-soft text-relabel border-relabel/30",
 };
-const TONE_ICON = { required: AlertTriangle, unreviewed: CircleDashed, confirmed: Check, rejected: X, relabelled: PenLine };
+const TONE_ICON = { required: AlertTriangle, unreviewed: CircleDashed, confirmed: Check, dismissed: X, relabelled: PenLine };
 
 export function ReviewBadge({ tone, className }: { tone: ReviewTone; className?: string }) {
   const Icon = TONE_ICON[tone];

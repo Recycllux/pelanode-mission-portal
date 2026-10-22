@@ -1,10 +1,31 @@
 import { getPnKey, type PelaApi } from "./client";
-import type { ExportFormat, ReplayCommand, ReviewRequest } from "./types";
+import type {
+  Event,
+  EventSummary,
+  ExportFormat,
+  ExportResult,
+  MissionContext,
+  MissionDetail,
+  NodeStatus,
+  ReplayCommand,
+  ReplayStatus,
+  ReportSummary,
+  ReviewRequest,
+  ReviewResponse,
+  TrackPoint,
+} from "./types";
 
+const enc = encodeURIComponent;
+
+/**
+ * Talks to the Spring Boot API. `base` may be empty: then all requests are
+ * same-origin relative URLs (/api/v1/..., /media/...).
+ */
 export class HttpApi implements PelaApi {
   readonly kind = "http" as const;
-  constructor(private base: string) {
-    this.base = base.replace(/\/$/, "");
+  private base: string;
+  constructor(base: string) {
+    this.base = base.trim().replace(/\/$/, "");
   }
 
   private async get<T>(path: string): Promise<T> {
@@ -24,27 +45,19 @@ export class HttpApi implements PelaApi {
     return (text ? JSON.parse(text) : undefined) as T;
   }
 
-  getMission = (id: string) => this.get<import("./types").Mission>(`/missions/${encodeURIComponent(id)}`);
-  getTrack = (id: string, until: string) =>
-    this.get<import("./types").TrackPoint[]>(`/missions/${encodeURIComponent(id)}/track?until=${encodeURIComponent(until)}`);
+  getMission = (id: string) => this.get<MissionDetail>(`/missions/${enc(id)}`);
+  getTrack = (id: string, until: string) => this.get<TrackPoint[]>(`/missions/${enc(id)}/track?until=${enc(until)}`);
   listEvents = (missionId: string, until: string) =>
-    this.get<import("./types").EventSummary[]>(
-      `/events?mission_id=${encodeURIComponent(missionId)}&until=${encodeURIComponent(until)}`,
-    );
-  getEvent = (id: string) => this.get<import("./types").Event>(`/events/${encodeURIComponent(id)}`);
-  reviewEvent = (id: string, body: ReviewRequest) =>
-    this.post<import("./types").Event>(`/events/${encodeURIComponent(id)}/review`, body);
-  getContext = (id: string) => this.get<import("./types").MissionContext>(`/missions/${encodeURIComponent(id)}/context`);
+    this.get<EventSummary[]>(`/events?mission_id=${enc(missionId)}&until=${enc(until)}`);
+  getEvent = (id: string) => this.get<Event>(`/events/${enc(id)}`);
+  reviewEvent = (id: string, body: ReviewRequest) => this.post<ReviewResponse>(`/events/${enc(id)}/review`, body);
+  getContext = (id: string) => this.get<MissionContext>(`/missions/${enc(id)}/context`);
   getNodeStatus = (nodeId: string, missionId: string) =>
-    this.get<import("./types").NodeStatus>(
-      `/nodes/${encodeURIComponent(nodeId)}/status?mission_id=${encodeURIComponent(missionId)}`,
-    );
-  getReplay = (id: string) => this.get<import("./types").ReplayStatus>(`/missions/${encodeURIComponent(id)}/replay`);
-  controlReplay = (id: string, cmd: ReplayCommand) =>
-    this.post<import("./types").ReplayStatus>(`/missions/${encodeURIComponent(id)}/replay`, cmd);
-  getReport = (id: string) => this.get<import("./types").ReportSummary>(`/missions/${encodeURIComponent(id)}/report`);
-  exportReport = (id: string, format: ExportFormat) =>
-    this.post<import("./types").ExportResult>(`/missions/${encodeURIComponent(id)}/export`, { format });
+    this.get<NodeStatus>(`/nodes/${enc(nodeId)}/status?mission_id=${enc(missionId)}`);
+  getReplay = (id: string) => this.get<ReplayStatus>(`/missions/${enc(id)}/replay`);
+  controlReplay = (id: string, cmd: ReplayCommand) => this.post<ReplayStatus>(`/missions/${enc(id)}/replay`, cmd);
+  getReport = (id: string) => this.get<ReportSummary>(`/missions/${enc(id)}/report`);
+  exportReport = (id: string, format: ExportFormat) => this.post<ExportResult>(`/missions/${enc(id)}/export`, { format });
   resetDemo = async (missionId: string) => {
     await this.post<void>(`/demo/reset`, { mission_id: missionId });
   };

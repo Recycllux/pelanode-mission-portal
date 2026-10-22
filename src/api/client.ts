@@ -3,23 +3,24 @@ import type {
   EventSummary,
   ExportFormat,
   ExportResult,
-  Mission,
+  MissionDetail,
   MissionContext,
   NodeStatus,
   ReplayCommand,
   ReplayStatus,
   ReportSummary,
   ReviewRequest,
+  ReviewResponse,
   TrackPoint,
 } from "./types";
 
 export interface PelaApi {
   readonly kind: "http" | "mock";
-  getMission(id: string): Promise<Mission>;
+  getMission(id: string): Promise<MissionDetail>;
   getTrack(id: string, until: string): Promise<TrackPoint[]>;
   listEvents(missionId: string, until: string): Promise<EventSummary[]>;
   getEvent(id: string): Promise<Event>;
-  reviewEvent(id: string, body: ReviewRequest): Promise<Event>;
+  reviewEvent(id: string, body: ReviewRequest): Promise<ReviewResponse>;
   getContext(id: string): Promise<MissionContext>;
   getNodeStatus(nodeId: string, missionId: string): Promise<NodeStatus>;
   getReplay(id: string): Promise<ReplayStatus>;

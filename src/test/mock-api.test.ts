@@ -48,9 +48,30 @@ describe("MockApi replay", () => {
   it("confirming keeps the original model output", async () => {
     const { api } = setup();
     await api.controlReplay(M, { action: "seek", to: "2026-10-24T15:04:00.000Z" });
-    const e = await api.reviewEvent("EV-0143", { action: "confirm", reviewer: "t", request_id: "r1" });
+    const { event: e } = await api.reviewEvent("EV-0143", { action: "confirm", reviewer: "t", request_id: "r1" });
     expect(e.review.status).toBe("confirmed");
     expect(e.model_output.class).toBe("submerged_debris");
     expect(e.model_output.confidence).toBe(0.82);
+  });
+
+  it("reject sets review status to dismissed", async () => {
+    const { api } = setup();
+    await api.controlReplay(M, { action: "seek", to: "2026-10-24T15:04:00.000Z" });
+    const { review } = await api.reviewEvent("EV-0142", { action: "reject", reviewer: "t", request_id: "r2" });
+    expect(review.status).toBe("dismissed");
+  });
+
+  it("only EV-0142, EV-0143 and EV-0144 exist, all review_required", async () => {
+    const { api } = setup();
+    await api.controlReplay(M, { action: "seek", to: "2026-10-24T15:04:00.000Z" });
+    const ev = await api.listEvents(M, FAR);
+    expect(ev.map((e) => e.event_id)).toEqual(["EV-0142", "EV-0143", "EV-0144"]);
+    expect(ev.every((e) => e.attention === "review_required")).toBe(true);
+  });
+
+  it("EV-0144 has no invented frame ID", async () => {
+    const { api } = setup();
+    await api.controlReplay(M, { action: "seek", to: "2026-10-24T15:04:00.000Z" });
+    expect((await api.getEvent("EV-0144")).observation.evidence.frame_uri).toBeNull();
   });
 });

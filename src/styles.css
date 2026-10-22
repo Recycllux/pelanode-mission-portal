@@ -151,7 +151,7 @@
 .pn-marker--required { --c: var(--review); }
 .pn-marker--unreviewed { --c: var(--navy); }
 .pn-marker--confirmed { --c: var(--teal); }
-.pn-marker--rejected { --c: var(--lowconf); }
+.pn-marker--dismissed { --c: var(--lowconf); }
 .pn-marker--relabelled { --c: var(--relabel); }
 .pn-marker--low { --c: var(--lowconf); }
 .pn-marker .pn-fill { fill: var(--c); stroke: oklch(1 0 0); stroke-width: 2.5; }

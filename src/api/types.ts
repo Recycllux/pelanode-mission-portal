@@ -1,11 +1,18 @@
 // All API types. Field names mirror the Spring Boot API contract (snake_case).
 
-export type DataOrigin = "simulated" | "replayed" | "live";
-export type Provenance = "simulated" | "replayed" | "placeholder" | "organiser" | "measured" | "live";
+export type DataOrigin = "live" | "recorded" | "replayed" | "simulated";
+export type Provenance = "simulated" | "replayed" | "recorded" | "placeholder" | "organiser" | "measured" | "live";
 export type Perspective = "above" | "below";
-export type ReviewStatus = "unreviewed" | "confirmed" | "rejected" | "relabelled";
-export type ReviewAction = "confirm" | "reject" | "relabel";
-export type Attention = "review_required" | "none";
+export type ReviewStatus = "unreviewed" | "confirmed" | "relabelled" | "dismissed";
+/** reject -> status "dismissed"; leave_open keeps the event unreviewed. */
+export type ReviewAction = "confirm" | "reject" | "relabel" | "leave_open";
+export type Attention = "review_required" | "informational";
+export type ContextRelation = "coincides_with" | "upstream_of" | "downstream_of" | "near";
+export type TrackSource = "gnss" | "simulated" | "replayed" | "interpolated";
+export type TrackQuality = "ok" | "degraded" | "demo_only" | "interpolated";
+export type GnssStatus = "fix" | "degraded" | "no_fix";
+export type CameraStatus = "ok" | "degraded" | "unavailable";
+export type MissionMode = "drift" | "moored" | "tethered";
 export type Connectivity = "online" | "degraded" | "offline";
 export type ReplayState = "idle" | "running" | "paused" | "ended";
 export type ExportFormat = "csv" | "geojson" | "json" | "html";
@@ -26,31 +33,44 @@ export interface MissionCounts {
 
 export interface NodeInfo {
   node_id: string;
-  name: string;
-  model: string;
+  node_type: string;
+  camera_ids: string[];
 }
 
 export interface Mission {
   mission_id: string;
   name: string;
-  mode: "drift" | "anchored" | "towed";
-  start_time: string;
-  end_time: string;
+  scenario: string;
+  region: string;
+  node_id: string;
+  mode: MissionMode;
+  planned_start: string;
+  planned_end: string;
+  /** [min_lon, min_lat, max_lon, max_lat] */
+  area_bbox: [number, number, number, number];
   data_origin: DataOrigin;
-  river: string;
+  schema_version: string;
+}
+
+/** GET /missions/{id} */
+export interface MissionDetail extends Mission {
   node: NodeInfo;
   counts: MissionCounts;
 }
 
 export interface TrackPoint {
+  track_point_id: string;
   mission_id: string;
-  t: string;
+  node_id: string;
+  captured_at: string;
   lat: number;
   lon: number;
-  heading_deg: number;
-  speed_mps: number;
   h_acc_m: number;
-  source: Provenance;
+  speed_mps: number;
+  heading_deg: number;
+  source: TrackSource;
+  quality_flag: TrackQuality;
+  data_origin: DataOrigin;
 }
 
 export interface Evidence {
@@ -89,7 +109,7 @@ export interface EventContext {
   station_name: string;
   distance_km: number;
   time_offset_min: number;
-  relation: "coincides_with" | "associated_with";
+  relation: ContextRelation;
   provenance: Provenance;
 }
 
@@ -178,8 +198,16 @@ export interface MissionContext {
 export interface NodeStatus {
   battery_pct: number;
   connectivity: Connectivity;
+  gnss_status: GnssStatus;
+  surface_camera: CameraStatus;
+  underwater_camera: CameraStatus;
   storage_pct: number;
-  gnss_quality: string;
+}
+
+/** POST /events/{id}/review */
+export interface ReviewResponse {
+  review: Review;
+  event: Event;
 }
 
 export interface ReplayStatus {

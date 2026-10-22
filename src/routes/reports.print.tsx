@@ -8,7 +8,7 @@ import { Wordmark } from "@/components/pn/AppShell";
 import { EvidenceFrame } from "@/components/pn/EvidenceFrame";
 import { LazyMap } from "@/components/pn/LazyMap";
 import { useEvents, useMissionContext, useReport, useTrack } from "@/hooks/use-mission";
-import { eventTitle, fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, reviewTone, systemSummary } from "@/lib/pn-format";
+import { RELATION_LABEL, eventTitle, fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, reviewTone, systemSummary } from "@/lib/pn-format";
 
 export const Route = createFileRoute("/reports/print")({
   head: () => ({
@@ -82,7 +82,7 @@ function PrintReport() {
                 <p>Human review: {humanize(e.review.status)}{e.review.current_label ? ` → ${humanize(e.review.current_label)}` : ""}{e.review.by ? ` by ${e.review.by}` : ""}</p>
                 <ul className="list-disc pl-5">
                   {e.context.map((c) => (
-                    <li key={c.dataset_id}>Coincides with {humanize(c.variable).toLowerCase()} {fmtNum(c.value, c.unit === "m" ? 2 : 0)} {c.unit} — {c.station_name}, {c.distance_km} km, {c.time_offset_min} min · source {c.provider} ({c.provenance})</li>
+                    <li key={c.dataset_id}>{RELATION_LABEL[c.relation]} {humanize(c.variable).toLowerCase()} {fmtNum(c.value, c.unit === "m" ? 2 : 0)} {c.unit} — {c.station_name}, {c.distance_km} km, {c.time_offset_min} min · source {c.provider} ({c.provenance}) — association only, not cause</li>
                   ))}
                 </ul>
                 <p className="text-muted-foreground">{systemSummary(e)}</p>
