@@ -74,4 +74,14 @@ describe("MockApi replay", () => {
     await api.controlReplay(M, { action: "seek", to: "2026-10-24T15:04:00.000Z" });
     expect((await api.getEvent("EV-0144")).observation.evidence.frame_uri).toBeNull();
   });
+
+  it("review stores mission time and real time separately", async () => {
+    const { api, advance } = setup();
+    await api.controlReplay(M, { action: "seek", to: "2026-10-24T15:04:00.000Z" });
+    advance(5_000);
+    const { review } = await api.reviewEvent("EV-0143", { action: "confirm", reviewer: "t", request_id: "r9" });
+    expect(review.mission_time).toBe("2026-10-24T15:04:00.000Z");
+    expect(review.at).toBe(new Date(1_005_000).toISOString());
+    expect(review.current_label).toBe("submerged_debris");
+  });
 });
