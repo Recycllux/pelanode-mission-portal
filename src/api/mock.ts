@@ -97,7 +97,7 @@ export class MockApi implements PelaApi {
     const ev = this.visibleEvents(t);
     const elapsedMin = Math.floor((t - START_MS) / MIN);
     return {
-      ...buildMission(),
+      ...buildMission(this.track),
       mission_id: id,
       counts: {
         observations: (elapsedMin + 1) * 2,
@@ -111,7 +111,7 @@ export class MockApi implements PelaApi {
   async getTrack(_id: string, until: string) {
     await this.delay();
     const u = Math.min(Date.parse(until), this.missionMs());
-    return clone(this.track.filter((p) => Date.parse(p.t) <= u));
+    return clone(this.track.filter((p) => Date.parse(p.captured_at) <= u));
   }
 
   async listEvents(_missionId: string, until: string) {
@@ -133,17 +133,18 @@ export class MockApi implements PelaApi {
     if (!e) throw new Error(`Event ${id} not found`);
     if (!this.seenRequests.has(body.request_id)) {
       this.seenRequests.add(body.request_id);
-      const status = body.action === "confirm" ? "confirmed" : body.action === "reject" ? "rejected" : "relabelled";
+      // reject -> dismissed; leave_open keeps the current status (event stays open).
+      const status = body.action === "confirm" ? "confirmed" : body.action === "reject" ? "dismissed" : body.action === "relabel" ? "relabelled" : e.review.status;
       e.review = {
         status,
-        current_label: body.action === "relabel" ? (body.new_label ?? null) : body.action === "confirm" ? e.model_output.class : null,
+        current_label: body.action === "relabel" ? (body.new_label ?? null) : body.action === "confirm" ? e.model_output.class : body.action === "leave_open" ? e.review.current_label : null,
         last_action: body.action,
         by: body.reviewer,
         at: new Date(this.missionMs()).toISOString(),
         note: body.note ?? null,
       };
     }
-    return clone(e);
+    return clone({ review: e.review, event: e });
   }
 
   async getContext(_id?: string) {
@@ -157,8 +158,10 @@ export class MockApi implements PelaApi {
     return {
       battery_pct: Math.round(88 - min * 0.15),
       connectivity: "online" as const,
+      gnss_status: "fix" as const,
+      surface_camera: "ok" as const,
+      underwater_camera: "ok" as const,
       storage_pct: Math.round(38 + min * 0.1),
-      gnss_quality: "Good (replayed)",
     };
   }
 
@@ -212,14 +215,14 @@ export class MockApi implements PelaApi {
     await this.delay();
     const t = this.missionMs();
     const m = await this.getMission(id);
-    const tr = this.track.filter((p) => Date.parse(p.t) <= t);
+    const tr = this.track.filter((p) => Date.parse(p.captured_at) <= t);
     let km = 0;
     for (let i = 1; i < tr.length; i++) km += haversineKm(tr[i - 1]!.lat, tr[i - 1]!.lon, tr[i]!.lat, tr[i]!.lon);
     return {
       mission_id: id,
       name: m.name,
-      period_start: m.start_time,
-      period_end: m.end_time,
+      period_start: m.planned_start,
+      period_end: m.planned_end,
       until: new Date(t).toISOString(),
       ...m.counts,
       path_length_km: +km.toFixed(2),
@@ -235,7 +238,7 @@ export class MockApi implements PelaApi {
     if (format === "html") return { file_uri: "/reports/print" };
     const t = this.missionMs();
     const ev = this.visibleEvents(t);
-    const tr = this.track.filter((p) => Date.parse(p.t) <= t);
+    const tr = this.track.filter((p) => Date.parse(p.captured_at) <= t);
     let content = "";
     let type = "application/json";
     if (format === "csv") {

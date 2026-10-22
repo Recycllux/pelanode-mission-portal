@@ -1,4 +1,4 @@
-import type { ContextDataset, ContextRecord, Event, Mission, TrackPoint } from "./types";
+import type { ContextDataset, ContextRecord, Event, MissionDetail, TrackPoint } from "./types";
 
 export const MISSION_ID = "HACK-001";
 export const NODE_ID = "PN-MVP-001";
@@ -20,14 +20,18 @@ export function buildTrack(): TrackPoint[] {
     const lat = START_LAT + 0.0011 * Math.sin(f * Math.PI * 1.3) + 0.0004 * f;
     const lon = START_LON + TOTAL_DLON * (f + 0.03 * Math.sin(f * Math.PI * 2));
     pts.push({
+      track_point_id: `TP-${MISSION_ID}-${String(i).padStart(4, "0")}`,
       mission_id: MISSION_ID,
-      t: new Date(START_MS + i * MIN).toISOString(),
+      node_id: NODE_ID,
+      captured_at: new Date(START_MS + i * MIN).toISOString(),
       lat: +lat.toFixed(6),
       lon: +lon.toFixed(6),
       heading_deg: 0,
       speed_mps: 0,
       h_acc_m: 2.5 + 0.5 * Math.sin(i),
       source: "replayed",
+      quality_flag: "demo_only",
+      data_origin: "replayed",
     });
   }
   for (let i = 0; i < pts.length; i++) {
@@ -107,16 +111,22 @@ export function buildContextRecords(): ContextRecord[] {
   return out;
 }
 
-export function buildMission(): Omit<Mission, "counts"> {
+export function buildMission(track: TrackPoint[]): Omit<MissionDetail, "counts"> {
+  const lons = track.map((p) => p.lon);
+  const lats = track.map((p) => p.lat);
   return {
     mission_id: MISSION_ID,
     name: "Danube high-flow reconnaissance",
+    scenario: "hackathon_demo",
+    region: "Lower Danube (synthetic)",
+    node_id: NODE_ID,
     mode: "drift",
-    start_time: MISSION_START,
-    end_time: MISSION_END,
+    planned_start: MISSION_START,
+    planned_end: MISSION_END,
+    area_bbox: [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)],
     data_origin: "simulated",
-    river: "Lower Danube (synthetic)",
-    node: { node_id: NODE_ID, name: "PelaNode MVP 001", model: "PelaNode MVP" },
+    schema_version: "1.0",
+    node: { node_id: NODE_ID, node_type: "pelanode_mvp", camera_ids: ["CAM-SURF-01", "CAM-UW-01"] },
   };
 }
 
@@ -126,19 +136,19 @@ interface EventSeed {
   perspective: "above" | "below";
   cls: string;
   confidence: number;
-  frame: string;
+  /** null = no frame ID yet (UI shows "Frame TBD"). */
+  frame: string | null;
   quality: number;
   flags?: string[];
-  attention: "review_required" | "none";
+  attention: "review_required" | "informational";
   reasons: string[];
   bbox: [number, number, number, number];
 }
 
 const SEEDS: EventSeed[] = [
   { n: "0142", minute: 10, perspective: "above", cls: "anthropogenic_debris", confidence: 0.93, frame: "SURF-003210", quality: 0.84, attention: "review_required", reasons: ["score_above_threshold"], bbox: [412, 288, 96, 64] },
-  { n: "0143", minute: 15, perspective: "below", cls: "submerged_debris", confidence: 0.82, frame: "UW-003892", quality: 0.71, attention: "none", reasons: [], bbox: [560, 340, 140, 90] },
-  { n: "0144", minute: 19, perspective: "below", cls: "surface_anomaly", confidence: 0.76, frame: "UW-004130", quality: 0.42, flags: ["low_visibility"], attention: "review_required", reasons: ["low_visibility", "score_above_threshold"], bbox: [300, 200, 220, 150] },
-  { n: "0145", minute: 30, perspective: "above", cls: "floating_vegetation", confidence: 0.54, frame: "SURF-004890", quality: 0.78, attention: "none", reasons: [], bbox: [700, 260, 120, 70] },
+  { n: "0143", minute: 15, perspective: "below", cls: "submerged_debris", confidence: 0.82, frame: "UW-003892", quality: 0.71, attention: "review_required", reasons: ["score_above_threshold"], bbox: [560, 340, 140, 90] },
+  { n: "0144", minute: 19, perspective: "below", cls: "surface_anomaly", confidence: 0.76, frame: null, quality: 0.42, flags: ["low_visibility"], attention: "review_required", reasons: ["low_visibility", "score_above_threshold"], bbox: [300, 200, 220, 150] },
 ];
 
 export function buildEvents(track: TrackPoint[], records: ContextRecord[]): Event[] {
@@ -177,7 +187,7 @@ export function buildEvents(track: TrackPoint[], records: ContextRecord[]): Even
         source_sensor: isAbove ? "camera_surface" : "camera_underwater",
         paired_observation_id: `OBS-HACK-001-${isAbove ? "U" : "S"}-${s.n}`,
         evidence: {
-          frame_uri: `/media/${isAbove ? "surface" : "underwater"}/${s.frame}.jpg`,
+          frame_uri: s.frame ? `/media/${isAbove ? "surface" : "underwater"}/${s.frame}.jpg` : null,
           thumb_uri: null,
           crop_uri: null,
           provenance: "placeholder",

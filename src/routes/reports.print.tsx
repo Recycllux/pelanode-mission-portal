@@ -8,7 +8,7 @@ import { Wordmark } from "@/components/pn/AppShell";
 import { EvidenceFrame } from "@/components/pn/EvidenceFrame";
 import { LazyMap } from "@/components/pn/LazyMap";
 import { useEvents, useMissionContext, useReport, useTrack } from "@/hooks/use-mission";
-import { eventTitle, fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, reviewTone, systemSummary } from "@/lib/pn-format";
+import { RELATION_LABEL, eventTitle, fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, reviewTone, systemSummary } from "@/lib/pn-format";
 
 export const Route = createFileRoute("/reports/print")({
   head: () => ({

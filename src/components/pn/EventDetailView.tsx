@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Event, ReviewAction } from "@/api/types";
 import { useEvent, useEvents, useReviewEvent } from "@/hooks/use-mission";
 import { cn } from "@/lib/utils";
-import { fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, eventTitle, perspectiveLabel, reviewTone, systemSummary, uuid } from "@/lib/pn-format";
+import { RELATION_LABEL, fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, eventTitle, perspectiveLabel, reviewTone, systemSummary, uuid } from "@/lib/pn-format";
 import { ConfidenceText, EventGlyph, ReviewBadge, SourceChip } from "./chips";
 import { EvidenceFrame } from "./EvidenceFrame";
 

@@ -12,7 +12,7 @@ import { LazyMap } from "@/components/pn/LazyMap";
 import type { MapLayers } from "@/components/pn/MissionMap";
 import { TimeBar } from "@/components/pn/TimeBar";
 import { useEvents, useMission, useMissionContext, useMissionTime, useNodeStatus, useTrack } from "@/hooks/use-mission";
-import { eventTitle, fmtDuration, fmtNum, fmtUtc, reviewTone, sortReviewQueue } from "@/lib/pn-format";
+import { eventTitle, fmtDuration, fmtNum, fmtUtc, humanize, reviewTone, sortReviewQueue } from "@/lib/pn-format";
 
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>): { event?: string } => (typeof s["event"] === "string" ? { event: s["event"] } : {}),
