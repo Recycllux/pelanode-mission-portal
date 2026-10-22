@@ -94,7 +94,7 @@ export function useReviewEvent() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: ReviewRequest }) => api().reviewEvent(id, body),
     onSuccess: (data) => {
-      qc.setQueryData(["event", data.event_id], data);
+      qc.setQueryData(["event", data.event.event_id], data.event);
       qc.invalidateQueries({ queryKey: ["events"] });
       qc.invalidateQueries({ queryKey: ["mission"] });
       qc.invalidateQueries({ queryKey: ["report"] });

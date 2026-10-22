@@ -54,9 +54,9 @@ function EventsPage() {
   return (
     <AppShell screen="Event Timeline">
       <div className="mx-auto max-w-[1600px] space-y-5 px-6 py-6">
-        <ContextChart context={ctx} events={events} until={until} missionStart={mission?.start_time} missionEnd={mission?.end_time} onSelectEvent={open} />
+        <ContextChart context={ctx} events={events} until={until} missionStart={mission?.planned_start} missionEnd={mission?.planned_end} onSelectEvent={open} />
         <div className="flex flex-wrap items-end gap-4">
-          <Filter label="Review status" value={status} onChange={setStatus} options={[{ v: "all", l: "All statuses" }, { v: "required", l: "Review required" }, { v: "unreviewed", l: "Not yet reviewed" }, { v: "confirmed", l: "Confirmed" }, { v: "rejected", l: "Rejected" }, { v: "relabelled", l: "Relabelled" }]} />
+          <Filter label="Review status" value={status} onChange={setStatus} options={[{ v: "all", l: "All statuses" }, { v: "required", l: "Review required" }, { v: "unreviewed", l: "Not yet reviewed" }, { v: "confirmed", l: "Confirmed" }, { v: "dismissed", l: "Dismissed" }, { v: "relabelled", l: "Relabelled" }]} />
           <Filter label="Perspective" value={persp} onChange={setPersp} options={[{ v: "all", l: "Above and below" }, { v: "above", l: "Above water" }, { v: "below", l: "Below water" }]} />
           <Filter label="Class" value={cls} onChange={setCls} options={[{ v: "all", l: "All classes" }, ...classes.map((c) => ({ v: c, l: humanize(c) }))]} />
           <span className="ml-auto text-sm text-muted-foreground tabular">{filtered.length} of {events.length} events up to {fmtUtc(until)}</span>

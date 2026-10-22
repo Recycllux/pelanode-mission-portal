@@ -1,7 +1,7 @@
 // All API types. Field names mirror the Spring Boot API contract (snake_case).
 
 export type DataOrigin = "live" | "recorded" | "replayed" | "simulated";
-export type Provenance = "simulated" | "replayed" | "placeholder" | "organiser" | "measured" | "live";
+export type Provenance = "simulated" | "replayed" | "recorded" | "placeholder" | "organiser" | "measured" | "live";
 export type Perspective = "above" | "below";
 export type ReviewStatus = "unreviewed" | "confirmed" | "relabelled" | "dismissed";
 /** reject -> status "dismissed"; leave_open keeps the event unreviewed. */

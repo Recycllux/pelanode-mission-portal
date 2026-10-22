@@ -1,4 +1,4 @@
-import type { Event, EventSummary, Provenance, Review } from "@/api/types";
+import type { ContextRelation, Event, EventSummary, Provenance, Review } from "@/api/types";
 
 export const fmtUtc = (iso: string | null | undefined, withSeconds = true) => {
   if (!iso) return "—";
@@ -29,7 +29,7 @@ export const fmtCoord = (lat: number, lon: number) => `${lat.toFixed(5)}°N, ${l
 
 export const LOW_CONFIDENCE = 0.6;
 
-export type ReviewTone = "required" | "unreviewed" | "confirmed" | "rejected" | "relabelled";
+export type ReviewTone = "required" | "unreviewed" | "confirmed" | "dismissed" | "relabelled";
 
 export function reviewTone(e: Pick<EventSummary, "attention" | "review">): ReviewTone {
   if (e.review.status === "unreviewed") return e.attention === "review_required" ? "required" : "unreviewed";
@@ -40,17 +40,26 @@ export const REVIEW_LABEL: Record<ReviewTone, string> = {
   required: "Review required",
   unreviewed: "Not yet reviewed",
   confirmed: "Confirmed by reviewer",
-  rejected: "Rejected by reviewer",
+  dismissed: "Dismissed by reviewer",
   relabelled: "Relabelled by reviewer",
 };
 
 export const PROVENANCE_LABEL: Record<Provenance, string> = {
   simulated: "SIMULATED",
   replayed: "REPLAYED",
+  recorded: "RECORDED",
   placeholder: "PLACEHOLDER",
   organiser: "ORGANISER",
   measured: "MEASURED",
   live: "LIVE",
+};
+
+/** Spatial/temporal relation wording. Always association only — never cause. */
+export const RELATION_LABEL: Record<ContextRelation, string> = {
+  coincides_with: "Coincides with",
+  upstream_of: "Upstream of",
+  downstream_of: "Downstream of",
+  near: "Near",
 };
 
 export const eventTitle = (e: { event_type: string; review: Review }) =>
@@ -68,7 +77,7 @@ export function systemSummary(e: Event): string {
   ];
   for (const c of e.context) {
     parts.push(
-      `Coincides with ${c.provenance} ${humanize(c.variable).toLowerCase()} of ${fmtNum(c.value, c.unit === "m" ? 2 : 0)} ${c.unit} at ${c.station_name} (${c.distance_km.toFixed(1)} km, ${c.time_offset_min} min). This is an association only, not a cause.`,
+      `${RELATION_LABEL[c.relation]} ${c.provenance} ${humanize(c.variable).toLowerCase()} of ${fmtNum(c.value, c.unit === "m" ? 2 : 0)} ${c.unit} at ${c.station_name} (${c.distance_km.toFixed(1)} km, ${c.time_offset_min} min). This is an association only, not a cause.`,
     );
   }
   if (e.observation.quality_flags?.length) parts.push(`Quality flags: ${e.observation.quality_flags.map(humanize).join(", ")}.`);

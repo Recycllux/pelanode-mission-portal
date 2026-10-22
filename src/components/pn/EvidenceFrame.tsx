@@ -13,7 +13,7 @@ export function EvidenceFrame({ event, className }: { event: Event; className?: 
   const url = api().mediaUrl(uri);
   const [failed, setFailed] = useState(false);
   const above = event.perspective === "above";
-  const frameId = uri?.split("/").pop()?.replace(/\.\w+$/, "") ?? "unknown frame";
+  const frameId = uri?.split("/").pop()?.replace(/\.\w+$/, "") ?? "Frame TBD";
   const showImg = url && !failed;
   const bbox = event.model_output.bbox;
 

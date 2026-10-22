@@ -108,7 +108,7 @@ export default function MissionMap({ track, events, datasets = [], latest = {}, 
         })}
       {head && (
         <Marker position={[head.lat, head.lon]} icon={nodeIcon(head.heading_deg)} zIndexOffset={2000}>
-          <Tooltip direction="bottom" offset={[0, 18]}>PN-MVP-001 · heading {Math.round(head.heading_deg)}° · {fmtUtc(head.t)}</Tooltip>
+          <Tooltip direction="bottom" offset={[0, 18]}>PN-MVP-001 · heading {Math.round(head.heading_deg)}° · {fmtUtc(head.captured_at)}</Tooltip>
         </Marker>
       )}
     </MapContainer>

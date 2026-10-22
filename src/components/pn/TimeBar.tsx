@@ -21,8 +21,8 @@ export function TimeBar({ onSelectEvent }: { onSelectEvent?: (id: string) => voi
   const ctl = useReplayControl();
   const [drag, setDrag] = useState<number | null>(null);
 
-  const start = mission ? Date.parse(mission.start_time) : 0;
-  const end = mission ? Date.parse(mission.end_time) : 1;
+  const start = mission ? Date.parse(mission.planned_start) : 0;
+  const end = mission ? Date.parse(mission.planned_end) : 1;
   const now = replay ? Date.parse(replay.mission_time) : start;
   useEffect(() => setDrag(null), [replay?.mission_time]);
   const value = drag ?? now;
@@ -91,8 +91,8 @@ export function TimeBar({ onSelectEvent }: { onSelectEvent?: (id: string) => voi
           aria-label="Mission time scrubber"
         />
         <div className="mt-1 flex justify-between text-xs text-muted-foreground tabular">
-          <span>{mission ? fmtUtc(mission.start_time, false) : ""}</span>
-          <span>{mission ? fmtUtc(mission.end_time, false) : ""}</span>
+          <span>{mission ? fmtUtc(mission.planned_start, false) : ""}</span>
+          <span>{mission ? fmtUtc(mission.planned_end, false) : ""}</span>
         </div>
       </div>
 

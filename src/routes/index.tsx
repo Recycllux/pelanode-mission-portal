@@ -75,7 +75,7 @@ function MissionMapPage() {
   }, [ctx, until]);
 
   const queue = sortReviewQueue(events);
-  const elapsed = mission && until ? Date.parse(until) - Date.parse(mission.start_time) : 0;
+  const elapsed = mission && until ? Date.parse(until) - Date.parse(mission.planned_start) : 0;
   const head = track.at(-1);
 
   const layerRows: { key: keyof MapLayers; label: string; source: ReactNode }[] = [
@@ -135,7 +135,7 @@ function MissionMapPage() {
                 <SourceChip source={mission?.data_origin ?? "simulated"} />
               </div>
               <div className="mt-2 text-lg font-bold">{mission?.name ?? "…"}</div>
-              <div className="text-sm text-muted-foreground">{mission?.mission_id} · {mission?.river}</div>
+              <div className="text-sm text-muted-foreground">{mission?.mission_id} · {mission?.region}</div>
               <div className="mt-3 divide-y">
                 <Stat icon={<Satellite className="h-4 w-4" />} k="Node" v={mission?.node.node_id ?? "—"} />
                 <Stat icon={<Navigation className="h-4 w-4" />} k="Mode" v={<span className="capitalize">{mission?.mode ?? "—"}{head ? ` · ${Math.round(head.heading_deg)}°` : ""}</span>} />
@@ -143,7 +143,7 @@ function MissionMapPage() {
                 <Stat icon={<Ruler className="h-4 w-4" />} k="Distance" v={`${distanceKm.toFixed(2)} km`} source={<SourceChip source="replayed" />} />
                 <Stat icon={<BatteryMedium className="h-4 w-4" />} k="Battery" v={node ? `${node.battery_pct}%` : "—"} source={<SourceChip source="simulated" />} />
                 <Stat icon={<Wifi className="h-4 w-4" />} k="Connectivity" v={<span className="capitalize">{node?.connectivity ?? "—"}</span>} source={<SourceChip source="simulated" />} />
-                <Stat icon={<Gauge className="h-4 w-4" />} k="GNSS" v={node?.gnss_quality ?? "—"} source={<SourceChip source="replayed" />} />
+                <Stat icon={<Gauge className="h-4 w-4" />} k="GNSS" v={<span className="capitalize">{node ? humanize(node.gnss_status) : "—"}</span>} source={<SourceChip source="replayed" />} />
               </div>
             </section>
 
