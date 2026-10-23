@@ -297,6 +297,13 @@ export class MockApi implements PelaApi {
     return clone(DANUBE_BACKTEST);
   }
 
+  /** Snapshot taken along the mock track on 2021-10-01: serves the nearest one, echoing the requested position. */
+  async getDanubePoint(lat: number, lon: number, _asOf: string) {
+    const { DANUBE_POINTS } = await import("./mock-danube");
+    const nearest = Object.values(DANUBE_POINTS).reduce((a, b) => (haversineKm(lat, lon, a.lat, a.lon) <= haversineKm(lat, lon, b.lat, b.lon) ? a : b));
+    return { ...clone(nearest), lat, lon };
+  }
+
   mediaUrl() {
     return null; // No real frames in the mock: always render the labelled placeholder.
   }

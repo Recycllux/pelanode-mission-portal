@@ -2,6 +2,7 @@ import { getPnKey, type PelaApi } from "./client";
 import type {
   DanubeBacktest,
   DanubeForecast,
+  DanubePointContext,
   DanubeProfile,
   DanubeSeries,
   Event,
@@ -70,6 +71,8 @@ export class HttpApi implements PelaApi {
   getDanubeProfile = (date: string) => this.get<DanubeProfile>(`/danube/profile?date=${enc(date)}`);
   getDanubeSeries = (stationId: string) => this.get<DanubeSeries>(`/danube/series?station=${enc(stationId)}`);
   getDanubeBacktest = (stationId: string) => this.get<DanubeBacktest>(`/danube/backtest?station=${enc(stationId)}`);
+  getDanubePoint = (lat: number, lon: number, asOf: string) =>
+    this.get<DanubePointContext>(`/danube/point?lat=${lat}&lon=${lon}&as_of=${enc(asOf)}`);
   mediaUrl = (uri: string | null) => (uri ? (/^https?:/.test(uri) ? uri : `${this.base}${uri}`) : null);
   fileUrl = (uri: string) => (/^(https?:|blob:)/.test(uri) ? uri : `${this.base}${uri}`);
 }

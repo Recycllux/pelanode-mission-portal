@@ -109,3 +109,24 @@ export function useResetDemo() {
     onSuccess: () => qc.invalidateQueries(),
   });
 }
+
+/** The Danube gauge data is 2021 (organiser); the 2026 mission is shown against this replay date. */
+export const DANUBE_REPLAY_DATE = "2021-10-01";
+
+export function useDanubeGauges(enabled = true) {
+  return useQuery({
+    queryKey: ["danube-profile", DANUBE_REPLAY_DATE],
+    queryFn: () => api().getDanubeProfile(DANUBE_REPLAY_DATE),
+    enabled,
+    staleTime: Infinity,
+  });
+}
+
+export function useDanubePoint(lat: number | undefined, lon: number | undefined) {
+  return useQuery({
+    queryKey: ["danube-point", lat, lon, DANUBE_REPLAY_DATE],
+    queryFn: () => api().getDanubePoint(lat!, lon!, DANUBE_REPLAY_DATE),
+    enabled: lat != null && lon != null,
+    staleTime: Infinity,
+  });
+}

@@ -11,7 +11,7 @@ import { EventDetailView } from "@/components/pn/EventDetailView";
 import { LazyMap } from "@/components/pn/LazyMap";
 import type { MapLayers } from "@/components/pn/MissionMap";
 import { TimeBar } from "@/components/pn/TimeBar";
-import { useEvents, useMission, useMissionContext, useMissionTime, useNodeStatus, useTrack } from "@/hooks/use-mission";
+import { DANUBE_REPLAY_DATE, useDanubeGauges, useEvents, useMission, useMissionContext, useMissionTime, useNodeStatus, useTrack } from "@/hooks/use-mission";
 import { eventTitle, fmtDuration, fmtNum, fmtUtc, humanize, reviewTone, sortReviewQueue } from "@/lib/pn-format";
 
 export const Route = createFileRoute("/")({
@@ -49,7 +49,8 @@ function MissionMapPage() {
   const { data: node } = useNodeStatus();
   const { data: ctx } = useMissionContext();
   const until = useMissionTime();
-  const [layers, setLayers] = useState<MapLayers>({ track: true, events: true, discharge: false, level: false });
+  const [layers, setLayers] = useState<MapLayers>({ track: true, events: true, discharge: false, level: false, gauges: true });
+  const gaugesQ = useDanubeGauges();
   const [focusKey, setFocusKey] = useState(0);
 
   const selectedId = search.event;
@@ -83,6 +84,7 @@ function MissionMapPage() {
     { key: "events", label: "Events", source: <SourceChip source="simulated" label="Sim AI" /> },
     { key: "discharge", label: "Discharge", source: <SourceChip source="simulated" /> },
     { key: "level", label: "Water level", source: <SourceChip source="simulated" /> },
+    { key: "gauges", label: "Danube gauges", source: <SourceChip source="organiser" label="Real 2021" /> },
   ];
 
   return (
@@ -90,7 +92,7 @@ function MissionMapPage() {
       <div className="flex h-full flex-col">
         <div className="flex min-h-0 flex-1">
           <div className="relative isolate min-w-0 flex-1">
-            <LazyMap initialBbox={mission?.area_bbox} track={track} events={events} datasets={ctx?.datasets} latest={latest} layers={layers} selectedId={selectedId} focus={focus} onSelectEvent={select} />
+            <LazyMap initialBbox={mission?.area_bbox} track={track} events={events} datasets={ctx?.datasets} gauges={gaugesQ.isError ? [] : gaugesQ.data?.points} gaugeDate={DANUBE_REPLAY_DATE} latest={latest} layers={layers} selectedId={selectedId} focus={focus} onSelectEvent={select} />
 
             <div className="absolute left-14 top-3 z-[500] w-64 rounded-lg border bg-card/95 p-3 shadow-lg backdrop-blur">
               <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Layers</h2>
@@ -116,6 +118,11 @@ function MissionMapPage() {
                     })}
                   <p className="text-muted-foreground">Stations lie off-screen upstream/downstream; zoom out to see them.</p>
                 </div>
+              )}
+              {layers.gauges && (
+                <p className="mt-2 border-t pt-2 text-xs text-muted-foreground">
+                  Real gauge levels from the organiser's Danube data, shown as of {DANUBE_REPLAY_DATE} (the 2026 mission is replayed against 2021). Positions are approximate.
+                </p>
               )}
             </div>
 

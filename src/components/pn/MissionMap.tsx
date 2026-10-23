@@ -3,7 +3,8 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
-import type { ContextDataset, ContextRecord, EventSummary, TrackPoint } from "@/api/types";
+import { haversineKm } from "@/api/mock-data";
+import type { ContextDataset, ContextRecord, DanubeProfilePoint, EventSummary, TrackPoint } from "@/api/types";
 import { LOW_CONFIDENCE, fmtNum, fmtUtc, humanize, reviewTone } from "@/lib/pn-format";
 
 export interface MapLayers {
@@ -11,12 +12,16 @@ export interface MapLayers {
   events: boolean;
   discharge: boolean;
   level: boolean;
+  gauges: boolean;
 }
 
 export interface MissionMapProps {
   track: TrackPoint[];
   events: EventSummary[];
   datasets?: ContextDataset[] | undefined;
+  /** Real Danube gauges (organiser data, 2021) with the level on the replay date. */
+  gauges?: DanubeProfilePoint[] | undefined;
+  gaugeDate?: string | undefined;
   latest?: Record<string, ContextRecord | undefined> | undefined;
   layers?: MapLayers | undefined;
   selectedId?: string | undefined;
@@ -59,17 +64,28 @@ const stationIcon = L.divIcon({
   html: `<svg width="22" height="22" viewBox="0 0 22 22"><rect class="pn-station" x="3" y="3" width="16" height="16" rx="3"/></svg>`,
 });
 
-function Controller({ focus, track, fitAll, initialBbox, datasets }: { focus?: MissionMapProps["focus"]; track: TrackPoint[]; fitAll?: boolean | undefined; initialBbox?: MissionMapProps["initialBbox"]; datasets: ContextDataset[] }) {
+const gaugeIcon = L.divIcon({
+  className: "pn-divicon",
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  html: `<svg width="24" height="24" viewBox="0 0 24 24"><path class="pn-gauge" d="M12 2 L22 12 L12 22 L2 12 Z"/><rect class="pn-gauge-bar" x="9" y="7" width="6" height="10" rx="1"/></svg>`,
+});
+
+/** Gauges this close to the mission get a permanent label and are included in the opening view. */
+const NEAR_GAUGE_KM = 10;
+
+function Controller({ focus, track, fitAll, initialBbox, datasets, nearGauges }: { focus?: MissionMapProps["focus"]; track: TrackPoint[]; fitAll?: boolean | undefined; initialBbox?: MissionMapProps["initialBbox"]; datasets: ContextDataset[]; nearGauges: DanubeProfilePoint[] | null }) {
   const map = useMap();
   const fitted = useRef(false);
   useEffect(() => {
-    if (fitted.current || !initialBbox || datasets.length === 0) return;
+    if (fitted.current || !initialBbox || datasets.length === 0 || !nearGauges) return;
     fitted.current = true;
     const [minLon, minLat, maxLon, maxLat] = initialBbox;
     const b = L.latLngBounds([minLat, minLon], [maxLat, maxLon]);
     for (const d of datasets) b.extend([d.lat, d.lon]);
+    for (const g of nearGauges) b.extend([g.lat!, g.lon!]);
     map.fitBounds(b, { padding: [40, 40] });
-  }, [initialBbox, datasets]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialBbox, datasets, nearGauges]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (focus) map.flyTo([focus.lat, focus.lon], Math.max(map.getZoom(), 16), { duration: 0.6 });
   }, [focus?.key]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -79,9 +95,16 @@ function Controller({ focus, track, fitAll, initialBbox, datasets }: { focus?: M
   return null;
 }
 
-export default function MissionMap({ track, events, datasets = [], latest = {}, layers = { track: true, events: true, discharge: false, level: false }, selectedId, focus, onSelectEvent, interactive = true, fitAll, initialBbox }: MissionMapProps) {
+export default function MissionMap({ track, events, datasets = [], gauges, gaugeDate, latest = {}, layers = { track: true, events: true, discharge: false, level: false, gauges: true }, selectedId, focus, onSelectEvent, interactive = true, fitAll, initialBbox }: MissionMapProps) {
   const positions = useMemo(() => track.map((p) => [p.lat, p.lon] as [number, number]), [track]);
   const head = track.at(-1);
+  const placed = useMemo(() => (gauges ?? []).filter((g) => g.lat != null && g.lon != null), [gauges]);
+  const isNear = (g: DanubeProfilePoint) => {
+    if (!initialBbox) return false;
+    const [minLon, minLat, maxLon, maxLat] = initialBbox;
+    return haversineKm((minLat + maxLat) / 2, (minLon + maxLon) / 2, g.lat!, g.lon!) <= NEAR_GAUGE_KM;
+  };
+  const nearGauges = useMemo(() => (!layers.gauges ? [] : gauges ? placed.filter(isNear) : null), [layers.gauges, gauges, placed, initialBbox]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <MapContainer
@@ -95,7 +118,7 @@ export default function MissionMap({ track, events, datasets = [], latest = {}, 
       attributionControl
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" maxZoom={19} />
-      <Controller focus={focus} track={track} fitAll={fitAll} initialBbox={initialBbox} datasets={datasets} />
+      <Controller focus={focus} track={track} fitAll={fitAll} initialBbox={initialBbox} datasets={datasets} nearGauges={nearGauges} />
       {layers.track && positions.length > 1 && <Polyline positions={positions} pathOptions={{ color: TEAL_TRACK, weight: 5, opacity: 0.9 }} />}
       {layers.events &&
         events.map((e) => (
@@ -113,6 +136,18 @@ export default function MissionMap({ track, events, datasets = [], latest = {}, 
             <Marker key={d.dataset_id} position={[d.lat, d.lon]} icon={stationIcon}>
               <Tooltip permanent direction="right" offset={[12, 0]}>
                 {d.station_name}: {r ? `${fmtNum(r.value, d.unit === "m" ? 2 : 0)} ${d.unit}` : "—"} · SIMULATED
+              </Tooltip>
+            </Marker>
+          );
+        })}
+      {layers.gauges &&
+        placed.map((g) => {
+          const near = isNear(g);
+          return (
+            <Marker key={`${g.station_id}-${near}`} position={[g.lat!, g.lon!]} icon={gaugeIcon}>
+              <Tooltip permanent={near} direction="left" offset={[-12, 0]}>
+                <strong>{g.name}</strong> · km {fmtNum(g.river_km, 0)} · {fmtNum(g.level_cm, 0)} cm
+                {g.change_24h_cm != null && ` (${g.change_24h_cm > 0 ? "+" : ""}${fmtNum(g.change_24h_cm, 0)} / 24 h)`} · {gaugeDate} · ORGANISER
               </Tooltip>
             </Marker>
           );

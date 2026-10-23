@@ -1,6 +1,7 @@
 import type {
   DanubeBacktest,
   DanubeForecast,
+  DanubePointContext,
   DanubeProfile,
   DanubeSeries,
   Event,
@@ -37,6 +38,8 @@ export interface PelaApi {
   getDanubeProfile(date: string): Promise<DanubeProfile>;
   getDanubeSeries(stationId: string): Promise<DanubeSeries>;
   getDanubeBacktest(stationId: string): Promise<DanubeBacktest>;
+  /** Real data at a position: nearest Danube gauge on asOf (2021) and the climate grid cell (2024, same calendar month). */
+  getDanubePoint(lat: number, lon: number, asOf: string): Promise<DanubePointContext>;
   /** Resolve a /media/... URI to a loadable URL, or null when no real frame exists. */
   mediaUrl(uri: string | null): string | null;
   /** Resolve an export file_uri to an openable URL. */
