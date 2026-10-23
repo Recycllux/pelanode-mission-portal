@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ContextRouteImport } from './routes/context'
+import { Route as DanubeRouteImport } from './routes/danube'
 import { Route as DualVisionRouteImport } from './routes/dual-vision'
 import { Route as NodesRouteImport } from './routes/nodes'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -39,6 +40,11 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
 const ContextRoute = ContextRouteImport.update({
   id: '/context',
   path: '/context',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DanubeRoute = DanubeRouteImport.update({
+  id: '/danube',
+  path: '/danube',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DualVisionRoute = DualVisionRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/context': typeof ContextRoute
+  '/danube': typeof DanubeRoute
   '/dual-vision': typeof DualVisionRoute
   '/nodes': typeof NodesRoute
   '/settings': typeof SettingsRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/context': typeof ContextRoute
+  '/danube': typeof DanubeRoute
   '/dual-vision': typeof DualVisionRoute
   '/nodes': typeof NodesRoute
   '/settings': typeof SettingsRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/context': typeof ContextRoute
+  '/danube': typeof DanubeRoute
   '/dual-vision': typeof DualVisionRoute
   '/nodes': typeof NodesRoute
   '/settings': typeof SettingsRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/analytics'
     | '/context'
+    | '/danube'
     | '/dual-vision'
     | '/nodes'
     | '/settings'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/analytics'
     | '/context'
+    | '/danube'
     | '/dual-vision'
     | '/nodes'
     | '/settings'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/analytics'
     | '/context'
+    | '/danube'
     | '/dual-vision'
     | '/nodes'
     | '/settings'
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ContextRoute: typeof ContextRoute
+  DanubeRoute: typeof DanubeRoute
   DualVisionRoute: typeof DualVisionRoute
   NodesRoute: typeof NodesRoute
   SettingsRoute: typeof SettingsRoute
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/context'
       fullPath: '/context'
       preLoaderRoute: typeof ContextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/danube': {
+      id: '/danube'
+      path: '/danube'
+      fullPath: '/danube'
+      preLoaderRoute: typeof DanubeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dual-vision': {
@@ -260,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AnalyticsRoute: AnalyticsRoute,
   ContextRoute: ContextRoute,
+  DanubeRoute: DanubeRoute,
   DualVisionRoute: DualVisionRoute,
   NodesRoute: NodesRoute,
   SettingsRoute: SettingsRoute,

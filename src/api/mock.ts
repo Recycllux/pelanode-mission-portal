@@ -22,6 +22,14 @@ import type {
 } from "./types";
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
+
+/** Latest snapshot date at or before `date` (ISO yyyy-mm-dd), else the earliest one. */
+export function snapshotKey(keys: string[], date: string): string {
+  const sorted = [...keys].sort();
+  let pick = sorted[0]!;
+  for (const k of sorted) if (k <= date.slice(0, 10)) pick = k;
+  return pick;
+}
 const wait = (ms = 40) => new Promise((r) => setTimeout(r, ms));
 
 export function toSummary(e: Event): EventSummary {
@@ -266,6 +274,27 @@ export class MockApi implements PelaApi {
   async resetDemo(_missionId?: string) {
     await this.delay();
     this.reset();
+  }
+
+  /** Danube data is a snapshot of the real backend, loaded on first use so it stays out of the main bundle. */
+  async getDanubeForecast(_missionId: string, asOf: string) {
+    const { DANUBE_FORECASTS } = await import("./mock-danube");
+    return clone(DANUBE_FORECASTS[snapshotKey(Object.keys(DANUBE_FORECASTS), asOf)]!);
+  }
+
+  async getDanubeProfile(date: string) {
+    const { DANUBE_PROFILES } = await import("./mock-danube");
+    return clone(DANUBE_PROFILES[snapshotKey(Object.keys(DANUBE_PROFILES), date)]!);
+  }
+
+  async getDanubeSeries(_stationId: string) {
+    const { DANUBE_SERIES } = await import("./mock-danube");
+    return clone(DANUBE_SERIES);
+  }
+
+  async getDanubeBacktest(_stationId: string) {
+    const { DANUBE_BACKTEST } = await import("./mock-danube");
+    return clone(DANUBE_BACKTEST);
   }
 
   mediaUrl() {

@@ -1,4 +1,8 @@
 import type {
+  DanubeBacktest,
+  DanubeForecast,
+  DanubeProfile,
+  DanubeSeries,
   Event,
   EventSummary,
   ExportFormat,
@@ -28,6 +32,11 @@ export interface PelaApi {
   getReport(id: string): Promise<ReportSummary>;
   exportReport(id: string, format: ExportFormat): Promise<ExportResult>;
   resetDemo(missionId: string): Promise<void>;
+  /** Danube level forecast for the station nearest the mission, as of a 2021 date (organiser data). */
+  getDanubeForecast(missionId: string, asOf: string): Promise<DanubeForecast>;
+  getDanubeProfile(date: string): Promise<DanubeProfile>;
+  getDanubeSeries(stationId: string): Promise<DanubeSeries>;
+  getDanubeBacktest(stationId: string): Promise<DanubeBacktest>;
   /** Resolve a /media/... URI to a loadable URL, or null when no real frame exists. */
   mediaUrl(uri: string | null): string | null;
   /** Resolve an export file_uri to an openable URL. */
