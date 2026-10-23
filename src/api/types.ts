@@ -297,6 +297,42 @@ export interface DanubeProfile extends DanubeHeader {
   points: DanubeProfilePoint[];
 }
 
+export interface DanubePointClimate {
+  variable: "precipitation" | "soil_moisture";
+  name: string;
+  unit: string;
+  source: string;
+  cell_lat: number;
+  cell_lon: number;
+  cell_distance_km: number;
+  /** Climate grid month (2024), matched to the Danube date by calendar month. */
+  month: string | null;
+  value: number | null;
+  /** Share of Bulgarian grid cells below this value in the same month, 0 to 100. */
+  rank_pct: number | null;
+  series: { month: string; value: number | null }[];
+}
+
+/** Real data for one position: nearest Danube gauge (2021) and the climate grid cell (2024). */
+export interface DanubePointContext {
+  lat: number;
+  lon: number;
+  as_of?: string;
+  nearest_gauge?: {
+    station: DanubeStation;
+    distance_km: number;
+    date: string;
+    level_cm: number | null;
+    change_24h_cm: number | null;
+    water_temp_c: number | null;
+    thresholds: DanubeThresholds;
+    forecastable: boolean;
+  } | null;
+  climate: DanubePointClimate[];
+  provenance: Provenance;
+  note: string;
+}
+
 export interface DanubeSeries extends DanubeHeader {
   station: DanubeStation;
   thresholds: DanubeThresholds;

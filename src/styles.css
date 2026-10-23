@@ -160,6 +160,8 @@
 .pn-node .pn-node-body { fill: var(--attention); stroke: oklch(1 0 0); stroke-width: 3; }
 .pn-node .pn-node-pulse { fill: var(--attention); opacity: 0.25; transform-origin: center; animation: pn-pulse 2s ease-out infinite; }
 .pn-station { fill: var(--card); stroke: var(--navy); stroke-width: 2.5; }
+.pn-gauge { fill: var(--navy); stroke: var(--card); stroke-width: 1.5; }
+.pn-gauge-bar { fill: var(--card); }
 @keyframes pn-pulse {
   0% { transform: scale(0.6); opacity: 0.45; }
   100% { transform: scale(1.6); opacity: 0; }

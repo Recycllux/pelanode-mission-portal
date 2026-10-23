@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Bot, Check, ChevronLeft, ChevronRight, Database, FileText, MapPin, PenLine, Satellite, UserCheck, X } from "lucide-react";
+import { Bot, Check, ChevronLeft, ChevronRight, CloudRain, Database, FileText, MapPin, PenLine, Satellite, UserCheck, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { Event, ReviewAction } from "@/api/types";
-import { useEvent, useEvents, useReviewEvent } from "@/hooks/use-mission";
+import type { DanubePointClimate, Event, ReviewAction } from "@/api/types";
+import { useDanubePoint, useEvent, useEvents, useReviewEvent } from "@/hooks/use-mission";
 import { cn } from "@/lib/utils";
 import { RELATION_LABEL, fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, eventTitle, perspectiveLabel, reviewTone, systemSummary, uuid } from "@/lib/pn-format";
 import { ConfidenceText, EventGlyph, ReviewBadge, SourceChip } from "./chips";
@@ -86,6 +86,63 @@ function ReviewControls({ event }: { event: Event }) {
       )}
       <Textarea placeholder="Optional reviewer note (applies to the next action)" value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
       {review.isError && <p className="text-sm text-review">Review could not be saved: {(review.error as Error).message}</p>}
+    </div>
+  );
+}
+
+const MONTH = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+const fmtMonth = (m: string | null) => (m ? MONTH.format(new Date(`${m}-01T00:00:00Z`)) : "—");
+const signed = (n: number) => `${n > 0 ? "+" : ""}${fmtNum(n, 0)}`;
+
+function climateValue(c: DanubePointClimate) {
+  if (c.value == null) return "—";
+  return c.variable === "soil_moisture" ? `${fmtNum(c.value, 2)} m³/m³` : `${fmtNum(c.value, 0)} mm`;
+}
+
+function climateRank(c: DanubePointClimate) {
+  if (c.rank_pct == null) return null;
+  const word = c.variable === "soil_moisture" ? "wetter soil" : "more rain";
+  return `${word} than ${fmtNum(c.rank_pct, 0)}% of Bulgaria that month`;
+}
+
+function RealPointData({ lat, lon }: { lat: number; lon: number }) {
+  const { data: p, isLoading, error } = useDanubePoint(lat, lon);
+  if (isLoading) return <p className="text-sm text-muted-foreground">Loading real data for this position…</p>;
+  if (error || !p) return <p className="text-sm text-muted-foreground">Real data not available: {(error as Error)?.message}</p>;
+  const g = p.nearest_gauge;
+  const t = g?.thresholds;
+  const state = g?.level_cm == null || !t ? null : t.low_cm != null && g.level_cm <= t.low_cm ? "low water" : t.high_cm != null && g.level_cm >= t.high_cm ? "high water" : "normal range";
+  return (
+    <div className="space-y-3">
+      {g && (
+        <div className="rounded-md border p-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-sm font-semibold">Danube level · {g.station.name} gauge</span>
+            <span className="text-xl font-bold tabular">{g.level_cm == null ? "—" : fmtNum(g.level_cm, 0)} <span className="text-sm font-medium">cm</span></span>
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground tabular">
+            {g.distance_km.toFixed(1)} km away · river km {fmtNum(g.station.river_km ?? 0, 0)} · {g.date}
+            {g.change_24h_cm != null && ` · ${signed(g.change_24h_cm)} cm / 24 h`}
+            {state && ` · ${state}`}
+            {t && t.low_cm != null && t.high_cm != null && ` (demo band ${fmtNum(t.low_cm, 0)} to ${fmtNum(t.high_cm, 0)} cm)`}
+          </div>
+          {g.forecastable && (
+            <Link to="/danube" className="no-print mt-2 inline-block text-xs font-semibold text-teal underline-offset-4 hover:underline">6-day forecast for this gauge →</Link>
+          )}
+        </div>
+      )}
+      {p.climate.map((c) => (
+        <div key={c.variable} className="rounded-md border p-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-sm font-semibold">{c.name} · {fmtMonth(c.month)}</span>
+            <span className="text-xl font-bold tabular">{climateValue(c)}</span>
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground tabular">
+            Grid cell {c.cell_distance_km.toFixed(1)} km away{climateRank(c) && ` · ${climateRank(c)}`}
+          </div>
+        </div>
+      ))}
+      <p className="text-xs text-muted-foreground">{p.note} Shown for context only, not as a cause of the event.</p>
     </div>
   );
 }
@@ -208,7 +265,11 @@ export function EventDetailView({ eventId, onNavigate, onShowOnMap, compact }: {
             </ul>
           </Layer>
 
-          <Layer n={5} title="System-generated summary" icon={<FileText className="h-4 w-4" aria-hidden />} source={<SourceChip source="simulated" label="Auto-text" />}>
+          <Layer n={5} title="Real data at this point" tone="context" icon={<CloudRain className="h-4 w-4" aria-hidden />} source={<SourceChip source="organiser" label="Organiser data" />}>
+            <RealPointData lat={e.position.lat} lon={e.position.lon} />
+          </Layer>
+
+          <Layer n={6} title="System-generated summary" icon={<FileText className="h-4 w-4" aria-hidden />} source={<SourceChip source="simulated" label="Auto-text" />}>
             <p className="text-sm leading-relaxed">{systemSummary(e)}</p>
           </Layer>
         </div>
