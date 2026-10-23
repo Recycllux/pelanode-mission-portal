@@ -141,14 +141,17 @@ export default function MissionMap({ track, events, datasets = [], gauges, gauge
           );
         })}
       {layers.gauges &&
-        placed.map((g) => (
-          <Marker key={g.station_id} position={[g.lat!, g.lon!]} icon={gaugeIcon}>
-            <Tooltip permanent={isNear(g)} direction="left" offset={[-12, 0]}>
-              <strong>{g.name}</strong> · km {fmtNum(g.river_km, 0)} · {fmtNum(g.level_cm, 0)} cm
-              {g.change_24h_cm != null && ` (${g.change_24h_cm > 0 ? "+" : ""}${fmtNum(g.change_24h_cm, 0)} / 24 h)`} · {gaugeDate} · ORGANISER
-            </Tooltip>
-          </Marker>
-        ))}
+        placed.map((g) => {
+          const near = isNear(g);
+          return (
+            <Marker key={`${g.station_id}-${near}`} position={[g.lat!, g.lon!]} icon={gaugeIcon}>
+              <Tooltip permanent={near} direction="left" offset={[-12, 0]}>
+                <strong>{g.name}</strong> · km {fmtNum(g.river_km, 0)} · {fmtNum(g.level_cm, 0)} cm
+                {g.change_24h_cm != null && ` (${g.change_24h_cm > 0 ? "+" : ""}${fmtNum(g.change_24h_cm, 0)} / 24 h)`} · {gaugeDate} · ORGANISER
+              </Tooltip>
+            </Marker>
+          );
+        })}
       {head && (
         <Marker position={[head.lat, head.lon]} icon={nodeIcon(head.heading_deg)} zIndexOffset={2000}>
           <Tooltip direction="bottom" offset={[0, 18]}>PN-MVP-001 · heading {Math.round(head.heading_deg)}° · {fmtUtc(head.captured_at)}</Tooltip>
