@@ -147,9 +147,9 @@ function DanubePage() {
         <div className="rounded-lg border bg-card p-4">
           <h2 className="mb-1 text-sm font-bold uppercase tracking-wide">The whole Danube on {fmtDay(asOf)}: level against each gauge's usual level</h2>
           <p className="mb-3 text-xs text-muted-foreground">
-            Bars show cm above or below the station median (2021 record), from Germany (left) to the Black Sea (right). A high-water pulse shows as teal bars moving right over the days.
+            Bars show cm above or below each gauge's median (2021 record), ordered from Germany (left) to the Black Sea (right). A high-water pulse shows as teal bars moving right as you replay the days.
           </p>
-          {profile.data ? <ProfileChart points={profile.data.points} target={f?.station.river_km ?? null} /> : <ChartPlaceholder />}
+          {profile.data ? <ProfileChart points={profile.data.points} target={f?.station.name ?? null} /> : <ChartPlaceholder />}
         </div>
 
         {f && (
@@ -282,17 +282,18 @@ function ForecastChart({ f, series }: { f: DanubeForecast; series: { date: strin
   );
 }
 
-function ProfileChart({ points, target }: { points: { name: string; country: string; river_km: number; anomaly_cm: number; level_cm: number; change_24h_cm: number | null }[]; target: number | null }) {
+function ProfileChart({ points, target }: { points: { name: string; country: string; river_km: number; anomaly_cm: number; level_cm: number; change_24h_cm: number | null }[]; target: string | null }) {
+  const ironGate = points.find((p) => p.river_km > IRON_GATE_KM && p.river_km < IRON_GATE_KM + 20)?.name;
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={points} barSize={9} margin={{ top: 20, right: 16, left: 0, bottom: 0 }}>
+    <ResponsiveContainer width="100%" height={340}>
+      <BarChart data={points} margin={{ top: 20, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="river_km" type="number" reversed domain={[0, 2400]} ticks={[2400, 2000, 1600, 1200, 800, 400, 0]} tickFormatter={(v) => `km ${v}`} stroke="var(--muted-foreground)" fontSize={12} />
+        <XAxis dataKey="name" interval={0} angle={-55} textAnchor="end" height={90} stroke="var(--muted-foreground)" fontSize={10} />
         <YAxis stroke="var(--muted-foreground)" fontSize={12} unit=" cm" width={70} />
         <Tooltip
-          labelFormatter={(km) => {
-            const p = points.find((x) => x.river_km === km);
-            return p ? `${p.name} (${p.country}) · km ${km}` : `km ${km}`;
+          labelFormatter={(name) => {
+            const p = points.find((x) => x.name === name);
+            return p ? `${p.name} (${p.country}) · km ${p.river_km}` : String(name);
           }}
           formatter={(v, _n, item) => {
             const p = item.payload as (typeof points)[number];
@@ -302,11 +303,11 @@ function ProfileChart({ points, target }: { points: { name: string; country: str
         <ReferenceLine y={0} stroke="var(--muted-foreground)" />
         <Bar dataKey="anomaly_cm" isAnimationActive={false}>
           {points.map((p) => (
-            <Cell key={p.river_km} fill={p.anomaly_cm >= 0 ? "var(--teal)" : "var(--attention)"} />
+            <Cell key={p.name} fill={p.anomaly_cm >= 0 ? "var(--teal)" : "var(--attention)"} />
           ))}
         </Bar>
-        <ReferenceLine x={IRON_GATE_KM} stroke="var(--navy)" strokeDasharray="4 4" label={{ value: "Iron Gates dam", position: "top", fontSize: 11, fill: "var(--navy)" }} />
-        {target != null && <ReferenceLine x={target} stroke="var(--review)" strokeWidth={2} label={{ value: `PelaNode ${MISSION_ID}`, position: "top", fontSize: 11, fill: "var(--review)" }} />}
+        {ironGate && <ReferenceLine x={ironGate} stroke="var(--navy)" strokeDasharray="4 4" label={{ value: "Iron Gates dam", position: "top", fontSize: 11, fill: "var(--navy)" }} />}
+        {target && <ReferenceLine x={target} stroke="var(--review)" strokeWidth={2} label={{ value: `PelaNode ${MISSION_ID}`, position: "top", fontSize: 11, fill: "var(--review)" }} />}
       </BarChart>
     </ResponsiveContainer>
   );
