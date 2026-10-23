@@ -246,3 +246,110 @@ export interface ReportSummary {
 export interface ExportResult {
   file_uri: string;
 }
+
+/* ---------- Danube level forecast (/danube/..., organiser data 2021) ---------- */
+
+export type DanubeAlertType = "low_water" | "high_water" | "rapid_rise" | "rapid_fall";
+export type DanubeAction = "survey_shallows" | "survey_behind_crest" | "routine";
+
+export interface DanubeStation {
+  station_id: string;
+  name: string;
+  name_bg: string;
+  country: string;
+  river: string;
+  river_km: number | null;
+  lat: number | null;
+  lon: number | null;
+  coords_approx: boolean;
+  source: string;
+}
+
+export interface DanubeThresholds {
+  low_cm: number | null;
+  high_cm: number | null;
+  basis: string;
+}
+
+interface DanubeHeader {
+  provenance: Provenance;
+  source: string;
+  data_from: string;
+  data_to: string;
+}
+
+export interface DanubeProfilePoint {
+  station_id: string;
+  name: string;
+  country: string;
+  river_km: number;
+  level_cm: number;
+  change_24h_cm: number | null;
+  anomaly_cm: number;
+  water_temp_c?: number | null;
+  lat?: number | null;
+  lon?: number | null;
+}
+
+export interface DanubeProfile extends DanubeHeader {
+  river: string;
+  date: string;
+  points: DanubeProfilePoint[];
+}
+
+export interface DanubeSeries extends DanubeHeader {
+  station: DanubeStation;
+  thresholds: DanubeThresholds;
+  series: { date: string; level_cm: number | null; water_temp_c: number | null }[];
+}
+
+export interface DanubeForecastPoint {
+  date: string;
+  horizon_days: number;
+  level_cm: number;
+  band_low_cm: number | null;
+  band_high_cm: number | null;
+  observed_cm: number | null;
+}
+
+export interface DanubeAlert {
+  type: DanubeAlertType;
+  date: string;
+  eta_days: number;
+  level_cm: number;
+  message: string;
+}
+
+export interface DanubeForecast extends DanubeHeader {
+  station: DanubeStation;
+  as_of: string;
+  observed_level_cm: number;
+  thresholds: DanubeThresholds;
+  forecast: DanubeForecastPoint[];
+  alerts: DanubeAlert[];
+  drivers: { station_id: string; name: string; river_km: number; contribution_cm: number }[];
+  model: {
+    method: string;
+    predictors: string[];
+    training_rows: number;
+    training_from: string | null;
+    training_to: string | null;
+    band: string;
+  };
+  recommendation: { action: DanubeAction; by: string | null; text: string };
+  mission_id?: string;
+}
+
+export interface DanubeBacktest extends DanubeHeader {
+  station: DanubeStation;
+  method: string;
+  thresholds: DanubeThresholds;
+  skill: {
+    horizon_days: number;
+    n: number;
+    mae_model_cm: number | null;
+    mae_persistence_cm: number | null;
+    improvement_pct: number | null;
+  }[];
+  threshold_crossings: { type: "low_water" | "high_water"; observed_on: string; level_cm: number; warned_days_ahead: number | null }[];
+}

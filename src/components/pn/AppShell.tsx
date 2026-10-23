@@ -7,6 +7,7 @@ import { SimulatedBadge } from "./chips";
 
 const NAV = [
   { to: "/", label: "Mission Map" },
+  { to: "/danube", label: "Danube Forecast" },
   { to: "/events", label: "Events" },
   { to: "/context", label: "Datasets" },
   { to: "/dual-vision", label: "Dual Vision" },

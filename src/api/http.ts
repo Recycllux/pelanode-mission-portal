@@ -1,5 +1,9 @@
 import { getPnKey, type PelaApi } from "./client";
 import type {
+  DanubeBacktest,
+  DanubeForecast,
+  DanubeProfile,
+  DanubeSeries,
   Event,
   EventSummary,
   ExportFormat,
@@ -61,6 +65,11 @@ export class HttpApi implements PelaApi {
   resetDemo = async (missionId: string) => {
     await this.post<void>(`/demo/reset`, { mission_id: missionId });
   };
+  getDanubeForecast = (missionId: string, asOf: string) =>
+    this.get<DanubeForecast>(`/danube/forecast?mission_id=${enc(missionId)}&as_of=${enc(asOf)}`);
+  getDanubeProfile = (date: string) => this.get<DanubeProfile>(`/danube/profile?date=${enc(date)}`);
+  getDanubeSeries = (stationId: string) => this.get<DanubeSeries>(`/danube/series?station=${enc(stationId)}`);
+  getDanubeBacktest = (stationId: string) => this.get<DanubeBacktest>(`/danube/backtest?station=${enc(stationId)}`);
   mediaUrl = (uri: string | null) => (uri ? (/^https?:/.test(uri) ? uri : `${this.base}${uri}`) : null);
   fileUrl = (uri: string) => (/^(https?:|blob:)/.test(uri) ? uri : `${this.base}${uri}`);
 }
