@@ -256,8 +256,8 @@ function ForecastChart({ f, series }: { f: DanubeForecast; series: { date: strin
   }, [f, series, issued]);
 
   return (
-    <ResponsiveContainer width="100%" height={340}>
-      <ComposedChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+    <ResponsiveContainer width="100%" height={440}>
+      <ComposedChart data={data} margin={{ top: 24, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
         <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={(t) => fmtDay(Number(t))} stroke="var(--muted-foreground)" fontSize={12} />
         <YAxis stroke="var(--muted-foreground)" fontSize={12} unit=" cm" width={70} />
@@ -285,7 +285,7 @@ function ForecastChart({ f, series }: { f: DanubeForecast; series: { date: strin
 function ProfileChart({ points, target }: { points: { name: string; country: string; river_km: number; anomaly_cm: number; level_cm: number; change_24h_cm: number | null }[]; target: number | null }) {
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={points} margin={{ top: 20, right: 16, left: 0, bottom: 0 }}>
+      <BarChart data={points} barSize={9} margin={{ top: 20, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
         <XAxis dataKey="river_km" type="number" reversed domain={[0, 2400]} ticks={[2400, 2000, 1600, 1200, 800, 400, 0]} tickFormatter={(v) => `km ${v}`} stroke="var(--muted-foreground)" fontSize={12} />
         <YAxis stroke="var(--muted-foreground)" fontSize={12} unit=" cm" width={70} />
@@ -300,7 +300,7 @@ function ProfileChart({ points, target }: { points: { name: string; country: str
           }}
         />
         <ReferenceLine y={0} stroke="var(--muted-foreground)" />
-        <Bar dataKey="anomaly_cm" barSize={8} isAnimationActive={false}>
+        <Bar dataKey="anomaly_cm" isAnimationActive={false}>
           {points.map((p) => (
             <Cell key={p.river_km} fill={p.anomaly_cm >= 0 ? "var(--teal)" : "var(--attention)"} />
           ))}
