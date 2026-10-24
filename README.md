@@ -15,6 +15,7 @@ Build the front end of **PelaNode Intelligence Portal**, a mission-centric web a
 ### API contract (HttpApi must call exactly these)
 - `GET /missions/{id}` → mission + node + counts
 - `GET /missions/{id}/track?until=<ISO>` → TrackPoint[]
+- `GET /missions/{id}/route` → TrackPoint[] (whole planned route, independent of replay time)
 - `GET /events?mission_id=HACK-001&until=<ISO>` → Event[] (summary)
 - `GET /events/{id}` → full Event (shape below)
 - `POST /events/{id}/review` body `{action: "confirm"|"reject"|"relabel", new_label?, note?, reviewer, request_id(uuid)}`

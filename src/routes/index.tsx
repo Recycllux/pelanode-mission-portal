@@ -11,7 +11,7 @@ import { EventDetailView } from "@/components/pn/EventDetailView";
 import { LazyMap } from "@/components/pn/LazyMap";
 import type { MapLayers } from "@/components/pn/MissionMap";
 import { TimeBar } from "@/components/pn/TimeBar";
-import { DANUBE_REPLAY_DATE, useDanubeGauges, useEvents, useMission, useMissionContext, useMissionTime, useNodeStatus, useTrack } from "@/hooks/use-mission";
+import { DANUBE_REPLAY_DATE, useDanubeGauges, useEvents, useMission, useMissionContext, useMissionTime, useNodeStatus, useRoute, useTrack } from "@/hooks/use-mission";
 import { eventTitle, fmtDuration, fmtNum, fmtUtc, humanize, reviewTone, sortReviewQueue } from "@/lib/pn-format";
 
 export const Route = createFileRoute("/")({
@@ -45,6 +45,7 @@ function MissionMapPage() {
   const navigate = useNavigate({ from: "/" });
   const { data: mission } = useMission();
   const { data: track = [] } = useTrack();
+  const { data: route = [] } = useRoute();
   const { data: events = [] } = useEvents();
   const { data: node } = useNodeStatus();
   const { data: ctx } = useMissionContext();
@@ -104,7 +105,7 @@ function MissionMapPage() {
       <div className="flex h-full flex-col">
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           <div className="relative isolate h-[60svh] min-h-[340px] min-w-0 lg:h-auto lg:min-h-0 lg:flex-1">
-            <LazyMap initialBbox={mission?.area_bbox} track={track} events={events} datasets={ctx?.datasets} gauges={gaugesQ.isError ? [] : gaugesQ.data?.points} gaugeDate={DANUBE_REPLAY_DATE} latest={latest} layers={layers} selectedId={selectedId} focus={focus} onSelectEvent={select} />
+            <LazyMap initialBbox={mission?.area_bbox} track={track} route={route} events={events} datasets={ctx?.datasets} gauges={gaugesQ.isError ? [] : gaugesQ.data?.points} gaugeDate={DANUBE_REPLAY_DATE} latest={latest} layers={layers} selectedId={selectedId} focus={focus} onSelectEvent={select} />
 
             <div className="absolute left-12 top-2.5 z-[500] max-h-[calc(100%-1.25rem)] w-[min(16rem,calc(100%-3.75rem))] overflow-y-auto rounded-lg border bg-card/95 p-3 shadow-lg backdrop-blur sm:left-14 sm:top-3 sm:w-64">
               <button

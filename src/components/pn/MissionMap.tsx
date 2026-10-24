@@ -30,6 +30,8 @@ export interface MapLayers {
 
 export interface MissionMapProps {
   track: TrackPoint[];
+  /** Whole planned route: drawn dashed under the replayed track, and the opening view fits it. */
+  route?: TrackPoint[] | undefined;
   events: EventSummary[];
   datasets?: ContextDataset[] | undefined;
   /** Real Danube gauges (organiser data, 2021) with the level on the replay date. */
@@ -86,21 +88,32 @@ const gaugeIcon = L.divIcon({
 
 /** Gauges this close to the mission get a permanent label and are included in the opening view. */
 const NEAR_GAUGE_KM = 10;
+/** Opening view stops here so the river and nearby towns stay in frame around a short route. */
+const OPENING_MAX_ZOOM = 13;
 
-function Controller({ focus, track, fitAll, initialBbox, datasets, nearGauges }: { focus?: MissionMapProps["focus"]; track: TrackPoint[]; fitAll?: boolean | undefined; initialBbox?: MissionMapProps["initialBbox"]; datasets: ContextDataset[]; nearGauges: DanubeProfilePoint[] | null }) {
+function Controller({ focus, track, route, fitAll, initialBbox, datasets, nearGauges }: { focus?: MissionMapProps["focus"]; track: TrackPoint[]; route: TrackPoint[]; fitAll?: boolean | undefined; initialBbox?: MissionMapProps["initialBbox"]; datasets: ContextDataset[]; nearGauges: DanubeProfilePoint[] | null }) {
   const map = useMap();
   const opening = useRef<L.LatLngBounds | null>(null);
   const userMoved = useRef(false);
+  const fittedRoute = useRef(false);
   useEffect(() => {
-    if (opening.current || !initialBbox || datasets.length === 0 || !nearGauges) return;
+    if (!initialBbox || datasets.length === 0 || !nearGauges) return;
+    // Fit once, and once more when the planned route arrives after the other data.
+    if (opening.current && (route.length === 0 || fittedRoute.current)) return;
+    fittedRoute.current = route.length > 0;
     const [minLon, minLat, maxLon, maxLat] = initialBbox;
     const b = L.latLngBounds([minLat, minLon], [maxLat, maxLon]);
-    for (const d of datasets) b.extend([d.lat, d.lon]);
-    for (const g of nearGauges) b.extend([g.lat!, g.lon!]);
+    if (route.length > 0) {
+      // The planned route is what the operator wants to see first; stations and gauges stay a pan away.
+      for (const p of route) b.extend([p.lat, p.lon]);
+    } else {
+      for (const d of datasets) b.extend([d.lat, d.lon]);
+      for (const g of nearGauges) b.extend([g.lat!, g.lon!]);
+    }
     opening.current = b;
     map.invalidateSize();
-    map.fitBounds(b, { padding: [40, 40], animate: false });
-  }, [initialBbox, datasets, nearGauges]); // eslint-disable-line react-hooks/exhaustive-deps
+    map.fitBounds(b, { padding: [40, 40], animate: false, maxZoom: OPENING_MAX_ZOOM });
+  }, [initialBbox, datasets, nearGauges, route.length]); // eslint-disable-line react-hooks/exhaustive-deps
   // Phones settle the map's height after first paint (address bar, lazy layout): keep the whole route
   // in view on resize until the user pans or zooms, and offer a button to get back to it.
   useEffect(() => {
@@ -111,7 +124,7 @@ function Controller({ focus, track, fitAll, initialBbox, datasets, nearGauges }:
     el.addEventListener("wheel", moved, { passive: true });
     const refit = () => {
       map.invalidateSize();
-      if (opening.current && !userMoved.current) map.fitBounds(opening.current, { padding: [40, 40], animate: false });
+      if (opening.current && !userMoved.current) map.fitBounds(opening.current, { padding: [40, 40], animate: false, maxZoom: OPENING_MAX_ZOOM });
     };
     const ro = new ResizeObserver(refit);
     ro.observe(map.getContainer());
@@ -126,7 +139,7 @@ function Controller({ focus, track, fitAll, initialBbox, datasets, nearGauges }:
         L.DomEvent.disableClickPropagation(btn);
         L.DomEvent.on(btn, "click", (ev) => {
           L.DomEvent.preventDefault(ev);
-          if (opening.current) map.fitBounds(opening.current, { padding: [40, 40] });
+          if (opening.current) map.fitBounds(opening.current, { padding: [40, 40], maxZoom: OPENING_MAX_ZOOM });
         });
         const bar = L.DomUtil.create("div", "leaflet-bar");
         bar.appendChild(btn);
@@ -150,8 +163,9 @@ function Controller({ focus, track, fitAll, initialBbox, datasets, nearGauges }:
   return null;
 }
 
-export default function MissionMap({ track, events, datasets = [], gauges, gaugeDate, latest = {}, layers = { track: true, events: true, discharge: false, level: false, gauges: true }, selectedId, focus, onSelectEvent, interactive = true, fitAll, initialBbox }: MissionMapProps) {
+export default function MissionMap({ track, route = [], events, datasets = [], gauges, gaugeDate, latest = {}, layers = { track: true, events: true, discharge: false, level: false, gauges: true }, selectedId, focus, onSelectEvent, interactive = true, fitAll, initialBbox }: MissionMapProps) {
   const positions = useMemo(() => track.map((p) => [p.lat, p.lon] as [number, number]), [track]);
+  const planned = useMemo(() => route.map((p) => [p.lat, p.lon] as [number, number]), [route]);
   const head = track.at(-1);
   const placed = useMemo(() => (gauges ?? []).filter((g) => g.lat != null && g.lon != null), [gauges]);
   const isNear = (g: DanubeProfilePoint) => {
@@ -174,7 +188,12 @@ export default function MissionMap({ track, events, datasets = [], gauges, gauge
     >
       {TILES_ENABLED && <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" maxZoom={19} />}
       <VectorBasemap />
-      <Controller focus={focus} track={track} fitAll={fitAll} initialBbox={initialBbox} datasets={datasets} nearGauges={nearGauges} />
+      <Controller focus={focus} track={track} route={route} fitAll={fitAll} initialBbox={initialBbox} datasets={datasets} nearGauges={nearGauges} />
+      {layers.track && planned.length > 1 && (
+        <Polyline positions={planned} pathOptions={{ color: TEAL_TRACK, weight: 4, opacity: 0.7, dashArray: "8 8" }}>
+          <Tooltip sticky>Planned route · {planned.length} points · REPLAYED</Tooltip>
+        </Polyline>
+      )}
       {layers.track && positions.length > 1 && <Polyline positions={positions} pathOptions={{ color: TEAL_TRACK, weight: 5, opacity: 0.9 }} />}
       {layers.events &&
         events.map((e) => (
