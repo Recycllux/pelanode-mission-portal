@@ -374,3 +374,70 @@ export function RiverMap({ stations, edges, levels = {}, source, downstream = {}
     </MapContainer>
   );
 }
+
+/* ---------- Case study map: Baia Mare 2000 plume on the Someș, Tisza and Danube (documented history, schematic path) ---------- */
+
+export interface CaseMapPoint {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  state: "reached" | "warned" | "unaware" | "source";
+  label: string;
+  permanent?: boolean;
+}
+
+export interface CaseMapProps {
+  path: [number, number][];
+  front: [number, number][];
+  frontDated: boolean;
+  points: CaseMapPoint[];
+  node?: { lat: number; lon: number; active: boolean } | null;
+}
+
+const CASE_FILL = { reached: "var(--review)", warned: "var(--attention)", unaware: "var(--card)", source: "var(--navy)" } as const;
+
+const caseNodeIcon = (active: boolean) =>
+  L.divIcon({
+    className: "pn-divicon",
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+    html: `<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="var(--teal)" stroke="white" stroke-width="2.5"/>${active ? `<circle cx="13" cy="13" r="12" fill="none" stroke="var(--attention)" stroke-width="2"/>` : ""}<circle cx="13" cy="13" r="3.5" fill="white"/></svg>`,
+  });
+
+export function CaseMap({ path, front, frontDated, points, node }: CaseMapProps) {
+  return (
+    <MapContainer center={[46.9, 21.6]} zoom={7} className="pn-muted-tiles pn-vector-base h-full w-full" attributionControl>
+      {TILES_ENABLED && <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" maxZoom={19} />}
+      <VectorBasemap />
+      <FitRiver points={path} />
+      <Polyline positions={path} pathOptions={{ color: "var(--navy)", weight: 3, opacity: 0.35, dashArray: frontDated ? undefined : "6 6" }}>
+        <Tooltip sticky>Schematic path: Lăpuș → Someș → Tisza → Danube (Natural Earth 1:10m)</Tooltip>
+      </Polyline>
+      {front.length > 1 && (
+        <Polyline positions={front} pathOptions={{ color: "var(--review)", weight: 7, opacity: 0.8 }}>
+          <Tooltip sticky>Cyanide plume, interpolated between the documented peak times</Tooltip>
+        </Polyline>
+      )}
+      {points.map((p) => (
+        <CircleMarker
+          key={`${p.id}-${p.state}-${p.permanent}`}
+          center={[p.lat, p.lon]}
+          radius={p.state === "source" ? 9 : 7}
+          pathOptions={{ color: "var(--navy)", weight: 2, fillColor: CASE_FILL[p.state], fillOpacity: 1 }}
+        >
+          <Tooltip permanent={p.permanent} direction="right" offset={[8, 0]}>
+            <strong>{p.name}</strong> · {p.label}
+          </Tooltip>
+        </CircleMarker>
+      ))}
+      {node && (
+        <Marker position={[node.lat, node.lon]} icon={caseNodeIcon(node.active)} zIndexOffset={600}>
+          <Tooltip direction="top" offset={[0, -12]} permanent={node.active}>
+            PelaNode node · {node.active ? "anomaly flagged" : "drifting below the pond"} · illustrative
+          </Tooltip>
+        </Marker>
+      )}
+    </MapContainer>
+  );
+}
