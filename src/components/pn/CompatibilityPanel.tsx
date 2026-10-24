@@ -15,7 +15,7 @@ export function CompatibilityPanel() {
       </p>
       {error && <p className="text-sm text-review">Not available: {(error as Error).message}</p>}
       {data && (
-        <Table>
+        <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow>
               <TableHead>Dataset</TableHead>

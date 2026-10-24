@@ -33,16 +33,16 @@ function PrintReport() {
   const events = full.map((q) => q.data).filter((e) => !!e);
 
   return (
-    <div className="mx-auto max-w-[1000px] bg-card px-10 py-8 text-foreground">
-      <div className="no-print mb-6 flex justify-between">
+    <div className="mx-auto max-w-[1000px] bg-card px-4 py-6 sm:px-10 sm:py-8 print:px-10 print:py-8 text-foreground">
+      <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
         <Link to="/reports" className="text-sm font-semibold text-teal hover:underline">← Back to Reports</Link>
         <Button onClick={() => window.print()}><Printer aria-hidden /> Print / save as PDF</Button>
       </div>
 
-      <header className="flex items-start justify-between border-b-4 border-navy pb-4">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b-4 border-navy pb-4">
         <div>
           <Wordmark className="text-navy" />
-          <h1 className="mt-4 text-3xl font-bold">Mission report: {r?.name}</h1>
+          <h1 className="mt-4 text-2xl font-bold sm:text-3xl">Mission report: {r?.name}</h1>
           <p className="mt-1 text-muted-foreground tabular">{r?.mission_id} · Period {r && fmtDateUtc(r.period_start)} – {r && fmtUtc(r.period_end, false)} · data up to {fmtUtc(r?.until)}</p>
         </div>
         <SimulatedBadge className="text-sm" />
@@ -52,7 +52,7 @@ function PrintReport() {
         All data in this report is simulated or replayed for a demonstration. Contextual values are associations in time and space — they coincide with events and do not indicate a cause.
       </p>
 
-      <section className="mt-6 grid grid-cols-5 gap-3 text-center">
+      <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5 print:grid-cols-5 text-center">
         {[["Observations", r?.observations], ["Events", r?.events], ["Review required", r?.review_required], ["Reviewed", r?.reviewed], ["Path", r ? `${r.path_length_km.toFixed(2)} km` : "—"]].map(([k, v]) => (
           <div key={k as string} className="rounded-md border p-3"><div className="text-2xl font-bold tabular">{v as string}</div><div className="text-xs text-muted-foreground">{k as string}</div></div>
         ))}
@@ -60,7 +60,7 @@ function PrintReport() {
 
       <section className="mt-6">
         <h2 className="mb-2 text-lg font-bold">Map snapshot <SourceChip source="replayed" /></h2>
-        <div className="isolate h-[380px] overflow-hidden rounded-lg border">
+        <div className="isolate h-[280px] sm:h-[380px] print:h-[380px] overflow-hidden rounded-lg border">
           <LazyMap track={track} events={summaries} interactive={false} fitAll />
         </div>
       </section>
@@ -70,11 +70,11 @@ function PrintReport() {
         {events.length === 0 && <p className="text-muted-foreground">No events up to this mission time.</p>}
         {events.map((e) => (
           <article key={e.event_id} className="break-inside-avoid rounded-lg border p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-bold">{e.event_id} · {eventTitle(e)}</h3>
               <ReviewBadge tone={reviewTone(e)} />
             </div>
-            <div className="mt-3 grid grid-cols-[320px_1fr] gap-4">
+            <div className="mt-3 grid gap-4 sm:grid-cols-[320px_1fr] print:grid-cols-[320px_1fr]">
               <EvidenceFrame event={e} />
               <div className="space-y-2 text-sm">
                 <p className="tabular">{fmtUtc(e.captured_at)} · {fmtCoord(e.position.lat, e.position.lon)} ± {e.position.h_acc_m} m · {e.perspective === "above" ? "above water" : "below water"}</p>

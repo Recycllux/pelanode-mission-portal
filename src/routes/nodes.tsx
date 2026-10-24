@@ -58,10 +58,10 @@ function NodesPage() {
 
   return (
     <AppShell screen="Nodes">
-      <div className="mx-auto max-w-[1600px] space-y-6 px-6 py-6">
+      <div className="mx-auto max-w-[1600px] space-y-6 px-4 py-4 sm:px-6 sm:py-6">
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Nodes</h1>
+            <h1 className="text-xl font-bold sm:text-2xl">Nodes</h1>
             <p className="mt-1 text-sm text-muted-foreground">PelaNode devices and their health at mission time {fmtUtc(until)}. One node is deployed in this demo.</p>
           </div>
           <span className="ml-auto text-sm text-muted-foreground">1 node · {status?.connectivity === "online" ? "1 online" : "0 online"}</span>

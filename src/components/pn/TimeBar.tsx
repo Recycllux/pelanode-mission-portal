@@ -29,18 +29,18 @@ export function TimeBar({ onSelectEvent }: { onSelectEvent?: (id: string) => voi
   const state = replay?.state ?? "idle";
 
   return (
-    <div className="no-print flex items-center gap-4 border-t bg-card px-6 py-3 shadow-[0_-2px_8px_-4px] shadow-navy/20">
+    <div className="no-print sticky bottom-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 border-t bg-card px-3 py-2 shadow-[0_-2px_8px_-4px] shadow-navy/20 sm:px-6 sm:py-3 lg:static lg:flex-nowrap">
       <div className="flex items-center gap-2">
         {state === "running" ? (
-          <Button size="lg" variant="secondary" onClick={() => ctl.mutate({ action: "pause" })} className="w-32">
+          <Button size="lg" variant="secondary" onClick={() => ctl.mutate({ action: "pause" })} className="w-24 sm:w-32">
             <Pause aria-hidden /> Pause
           </Button>
         ) : state === "paused" ? (
-          <Button size="lg" onClick={() => ctl.mutate({ action: "resume" })} className="w-32">
+          <Button size="lg" onClick={() => ctl.mutate({ action: "resume" })} className="w-24 sm:w-32">
             <Play aria-hidden /> Resume
           </Button>
         ) : (
-          <Button size="lg" onClick={() => ctl.mutate({ action: "start" })} className="w-32">
+          <Button size="lg" onClick={() => ctl.mutate({ action: "start" })} className="w-24 sm:w-32">
             {state === "ended" ? <RotateCcw aria-hidden /> : <Play aria-hidden />} {state === "ended" ? "Restart" : "Start"}
           </Button>
         )}
@@ -50,7 +50,7 @@ export function TimeBar({ onSelectEvent }: { onSelectEvent?: (id: string) => voi
           </Button>
         )}
         <Select value={String(replay?.speed ?? 100)} onValueChange={(v) => ctl.mutate({ action: "speed", speed: Number(v) })}>
-          <SelectTrigger className="h-10 w-40" aria-label="Replay speed">
+          <SelectTrigger className="h-10 w-28 sm:w-40" aria-label="Replay speed">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -63,7 +63,7 @@ export function TimeBar({ onSelectEvent }: { onSelectEvent?: (id: string) => voi
         </Select>
       </div>
 
-      <div className="relative flex-1 px-1 pt-5">
+      <div className="relative order-last w-full px-1 pt-5 lg:order-none lg:w-auto lg:flex-1">
         <div className="pointer-events-none absolute inset-x-1 top-0 h-5">
           {events.map((e) => {
             const pct = ((Date.parse(e.captured_at) - start) / (end - start)) * 100;
@@ -96,8 +96,8 @@ export function TimeBar({ onSelectEvent }: { onSelectEvent?: (id: string) => voi
         </div>
       </div>
 
-      <div className="min-w-56 text-right">
-        <div className="text-2xl font-bold tabular">{fmtUtc(new Date(value).toISOString())}</div>
+      <div className="ml-auto text-right lg:min-w-56">
+        <div className="text-lg font-bold tabular sm:text-2xl">{fmtUtc(new Date(value).toISOString())}</div>
         <div className="text-xs text-muted-foreground tabular">
           T+{fmtDuration(value - start)} / {fmtDuration(end - start)} · <span className="font-semibold uppercase">{state}</span> · replayed
         </div>

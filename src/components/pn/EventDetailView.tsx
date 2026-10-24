@@ -180,7 +180,7 @@ export function EventDetailView({ eventId, onNavigate, onShowOnMap, compact }: {
         <EventGlyph perspective={e.perspective} tone={tone} confidence={mo.confidence} size={28} />
         <div className="min-w-0 flex-1">
           <div className="text-sm text-muted-foreground tabular">{e.event_id} · {fmtDateUtc(e.captured_at)}</div>
-          <h2 className="text-2xl font-bold">{eventTitle(e)}</h2>
+          <h2 className="text-xl font-bold sm:text-2xl">{eventTitle(e)}</h2>
           <div className="mt-1 flex flex-wrap gap-2">
             <ReviewBadge tone={tone} />
             <SourceChip source={e.data_origin} />
@@ -189,14 +189,14 @@ export function EventDetailView({ eventId, onNavigate, onShowOnMap, compact }: {
             ))}
           </div>
         </div>
-        <div className="no-print flex gap-2">
+        <div className="no-print flex flex-wrap gap-2">
           <Button variant="outline" size="lg" disabled={!prev} onClick={() => prev && onNavigate(prev.event_id)} aria-label="Previous event"><ChevronLeft aria-hidden /> Prev</Button>
           <Button variant="outline" size="lg" disabled={!next} onClick={() => next && onNavigate(next.event_id)} aria-label="Next event">Next <ChevronRight aria-hidden /></Button>
           <Button variant="secondary" size="lg" onClick={() => onShowOnMap(e.event_id)}><MapPin aria-hidden /> Show on map</Button>
         </div>
       </div>
 
-      <div className={cn("grid gap-4", !compact && "xl:grid-cols-[1.1fr_1fr]")}>
+      <div className={cn("grid grid-cols-1 gap-4", !compact && "xl:grid-cols-[1.1fr_1fr]")}>
         <div className="space-y-4">
           <EvidenceFrame event={e} />
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-lg border bg-card p-4 sm:grid-cols-3">

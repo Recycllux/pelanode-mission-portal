@@ -122,10 +122,10 @@ function RiverPage() {
 
   return (
     <AppShell screen="River Intelligence">
-      <div className="mx-auto max-w-[1600px] space-y-5 px-6 py-6">
+      <div className="mx-auto max-w-[1600px] space-y-5 px-4 py-4 sm:px-6 sm:py-6">
         <div className="flex flex-wrap items-end gap-4">
           <div className="max-w-4xl">
-            <h1 className="text-2xl font-bold">Connected river intelligence · lower Danube</h1>
+            <h1 className="text-xl font-bold sm:text-2xl">Connected river intelligence · lower Danube</h1>
             <p className="mt-1 text-sm">{POSITIONING}</p>
             <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <SourceChip source="organiser" label="Organiser data" />
@@ -152,9 +152,9 @@ function RiverPage() {
           <Slider min={toMs(FIRST)} max={toMs(LAST)} step={DAY} value={[slider]} onValueChange={(v) => setSlider(v[0]!)} onValueCommit={(v) => pick(toDate(v[0]!))} aria-label="Scenario date" />
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-[3fr_2fr]">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[3fr_2fr]">
           <div className="space-y-3">
-            <div className="h-[640px] overflow-hidden rounded-lg border">
+            <div className="h-[380px] overflow-hidden rounded-lg border sm:h-[520px] xl:h-[640px]">
               <LazyRiverMap
                 stations={stations.data?.stations ?? []}
                 edges={graph.data?.edges ?? []}
@@ -242,7 +242,7 @@ function PropagationCard({ lags, source, onSource, options, change, edge, date, 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">Source</span>
         <Select value={source} onValueChange={onSource}>
-          <SelectTrigger className="h-8 w-[300px]">
+          <SelectTrigger className="h-8 w-full max-w-[300px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
