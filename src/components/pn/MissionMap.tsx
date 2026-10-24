@@ -177,7 +177,7 @@ export default function MissionMap({ track, route = [], events, datasets = [], g
 
   return (
     <MapContainer
-      center={[43.8998, 25.9306]}
+      center={[43.8725, 25.9785]}
       zoom={15}
       className="pn-muted-tiles pn-vector-base h-full w-full"
       zoomControl={interactive}
