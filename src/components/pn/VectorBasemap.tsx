@@ -1,5 +1,5 @@
 // Browser-only (imports Leaflet): offline vector basemap drawn under the raster tiles.
-// Data: public/basemap/danube-basemap.json, built from Natural Earth by scripts/build_basemap.py.
+// Data: src/data/danube-basemap.json (its own lazy chunk), built from Natural Earth by scripts/build_basemap.py.
 // Where tiles load they cover it; where they can't (offline, sandboxed previews) the map keeps
 // land, borders, rivers, lakes, roads and towns.
 import L from "leaflet";
@@ -10,9 +10,9 @@ type Feature = GeoJSON.Feature<GeoJSON.Geometry, { layer: string; name?: string;
 
 let cache: Promise<Feature[]> | null = null;
 function loadBasemap() {
-  cache ??= fetch(`${import.meta.env.BASE_URL}basemap/danube-basemap.json`)
-    .then((r) => (r.ok ? r.json() : { features: [] }))
-    .then((j: { features: Feature[] }) => j.features)
+  // A lazy import (not fetch) so it loads wherever the app's own scripts do, including sandboxed previews.
+  cache ??= import("@/data/danube-basemap.json")
+    .then((m) => (m.default as unknown as { features: Feature[] }).features)
     .catch(() => []);
   return cache;
 }
