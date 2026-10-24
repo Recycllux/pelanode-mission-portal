@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as CaseBaiaMareRouteImport } from './routes/case-baia-mare'
 import { Route as ContextRouteImport } from './routes/context'
 import { Route as DanubeRouteImport } from './routes/danube'
 import { Route as DualVisionRouteImport } from './routes/dual-vision'
@@ -36,6 +37,11 @@ const AdminRoute = AdminRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CaseBaiaMareRoute = CaseBaiaMareRouteImport.update({
+  id: '/case-baia-mare',
+  path: '/case-baia-mare',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContextRoute = ContextRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
+  '/case-baia-mare': typeof CaseBaiaMareRoute
   '/context': typeof ContextRoute
   '/danube': typeof DanubeRoute
   '/dual-vision': typeof DualVisionRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
+  '/case-baia-mare': typeof CaseBaiaMareRoute
   '/context': typeof ContextRoute
   '/danube': typeof DanubeRoute
   '/dual-vision': typeof DualVisionRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
+  '/case-baia-mare': typeof CaseBaiaMareRoute
   '/context': typeof ContextRoute
   '/danube': typeof DanubeRoute
   '/dual-vision': typeof DualVisionRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/analytics'
+    | '/case-baia-mare'
     | '/context'
     | '/danube'
     | '/dual-vision'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/analytics'
+    | '/case-baia-mare'
     | '/context'
     | '/danube'
     | '/dual-vision'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/analytics'
+    | '/case-baia-mare'
     | '/context'
     | '/danube'
     | '/dual-vision'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  CaseBaiaMareRoute: typeof CaseBaiaMareRoute
   ContextRoute: typeof ContextRoute
   DanubeRoute: typeof DanubeRoute
   DualVisionRoute: typeof DualVisionRoute
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/case-baia-mare': {
+      id: '/case-baia-mare'
+      path: '/case-baia-mare'
+      fullPath: '/case-baia-mare'
+      preLoaderRoute: typeof CaseBaiaMareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/context': {
@@ -299,6 +319,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AnalyticsRoute: AnalyticsRoute,
+  CaseBaiaMareRoute: CaseBaiaMareRoute,
   ContextRoute: ContextRoute,
   DanubeRoute: DanubeRoute,
   DualVisionRoute: DualVisionRoute,
