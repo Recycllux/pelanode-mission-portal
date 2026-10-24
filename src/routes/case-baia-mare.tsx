@@ -179,8 +179,8 @@ function CauseCard() {
   return (
     <div className="grid grid-cols-1 gap-4 rounded-lg border bg-card p-4 md:grid-cols-[320px_1fr]">
       <figure className="relative overflow-hidden rounded-md border bg-muted">
-        <img src="/case/baia-mare-illustration.svg" alt="Schematic illustration of a breached tailings dam releasing water into a stream on a winter night" className="aspect-[4/3] w-full object-cover" loading="lazy" />
-        <figcaption className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">AI-generated schematic illustration · not a photo</figcaption>
+        <img src="/case/baia-mare-illustration.jpg" alt="Illustration of the breached Aurul tailings dam pouring water into a stream on a rainy winter night, mining plant in the background" className="aspect-[4/3] w-full object-cover" loading="lazy" />
+        <figcaption className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">AI-generated illustration · not a photo</figcaption>
       </figure>
       <div className="space-y-2 text-sm">
         <h2 className="flex items-center gap-2 font-semibold">
