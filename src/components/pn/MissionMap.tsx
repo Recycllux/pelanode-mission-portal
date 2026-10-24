@@ -17,6 +17,7 @@ import type {
   TemperatureCandidateAnomaly,
   TrackPoint,
 } from "@/api/types";
+import { TILES_ENABLED, VectorBasemap } from "./VectorBasemap";
 import { LOW_CONFIDENCE, fmtNum, fmtUtc, humanize, reviewTone, windowText } from "@/lib/pn-format";
 
 export interface MapLayers {
@@ -88,16 +89,58 @@ const NEAR_GAUGE_KM = 10;
 
 function Controller({ focus, track, fitAll, initialBbox, datasets, nearGauges }: { focus?: MissionMapProps["focus"]; track: TrackPoint[]; fitAll?: boolean | undefined; initialBbox?: MissionMapProps["initialBbox"]; datasets: ContextDataset[]; nearGauges: DanubeProfilePoint[] | null }) {
   const map = useMap();
-  const fitted = useRef(false);
+  const opening = useRef<L.LatLngBounds | null>(null);
+  const userMoved = useRef(false);
   useEffect(() => {
-    if (fitted.current || !initialBbox || datasets.length === 0 || !nearGauges) return;
-    fitted.current = true;
+    if (opening.current || !initialBbox || datasets.length === 0 || !nearGauges) return;
     const [minLon, minLat, maxLon, maxLat] = initialBbox;
     const b = L.latLngBounds([minLat, minLon], [maxLat, maxLon]);
     for (const d of datasets) b.extend([d.lat, d.lon]);
     for (const g of nearGauges) b.extend([g.lat!, g.lon!]);
-    map.fitBounds(b, { padding: [40, 40] });
+    opening.current = b;
+    map.invalidateSize();
+    map.fitBounds(b, { padding: [40, 40], animate: false });
   }, [initialBbox, datasets, nearGauges]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Phones settle the map's height after first paint (address bar, lazy layout): keep the whole route
+  // in view on resize until the user pans or zooms, and offer a button to get back to it.
+  useEffect(() => {
+    // Real pointer/wheel input only: fitBounds itself fires zoom events.
+    const moved = () => (userMoved.current = true);
+    const el = map.getContainer();
+    el.addEventListener("pointerdown", moved);
+    el.addEventListener("wheel", moved, { passive: true });
+    const refit = () => {
+      map.invalidateSize();
+      if (opening.current && !userMoved.current) map.fitBounds(opening.current, { padding: [40, 40], animate: false });
+    };
+    const ro = new ResizeObserver(refit);
+    ro.observe(map.getContainer());
+    const Fit = L.Control.extend({
+      onAdd() {
+        const btn = L.DomUtil.create("a", "pn-fit-btn");
+        btn.href = "#";
+        btn.title = "Show the whole route";
+        btn.setAttribute("role", "button");
+        btn.setAttribute("aria-label", "Show the whole route");
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>`;
+        L.DomEvent.disableClickPropagation(btn);
+        L.DomEvent.on(btn, "click", (ev) => {
+          L.DomEvent.preventDefault(ev);
+          if (opening.current) map.fitBounds(opening.current, { padding: [40, 40] });
+        });
+        const bar = L.DomUtil.create("div", "leaflet-bar");
+        bar.appendChild(btn);
+        return bar;
+      },
+    });
+    const fit = map.zoomControl ? new Fit({ position: "topleft" }).addTo(map) : null;
+    return () => {
+      el.removeEventListener("pointerdown", moved);
+      el.removeEventListener("wheel", moved);
+      ro.disconnect();
+      fit?.remove();
+    };
+  }, [map]);
   useEffect(() => {
     if (focus) map.flyTo([focus.lat, focus.lon], Math.max(map.getZoom(), 16), { duration: 0.6 });
   }, [focus?.key]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -122,14 +165,15 @@ export default function MissionMap({ track, events, datasets = [], gauges, gauge
     <MapContainer
       center={[43.8998, 25.9306]}
       zoom={15}
-      className="pn-muted-tiles h-full w-full"
+      className="pn-muted-tiles pn-vector-base h-full w-full"
       zoomControl={interactive}
       dragging={interactive}
       scrollWheelZoom={interactive}
       doubleClickZoom={interactive}
       attributionControl
     >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" maxZoom={19} />
+      {TILES_ENABLED && <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" maxZoom={19} />}
+      <VectorBasemap />
       <Controller focus={focus} track={track} fitAll={fitAll} initialBbox={initialBbox} datasets={datasets} nearGauges={nearGauges} />
       {layers.track && positions.length > 1 && <Polyline positions={positions} pathOptions={{ color: TEAL_TRACK, weight: 5, opacity: 0.9 }} />}
       {layers.events &&
@@ -157,10 +201,17 @@ export default function MissionMap({ track, events, datasets = [], gauges, gauge
           const near = isNear(g);
           return (
             <Marker key={`${g.station_id}-${near}`} position={[g.lat!, g.lon!]} icon={gaugeIcon}>
-              <Tooltip permanent={near} direction="left" offset={[-12, 0]}>
-                <strong>{g.name}</strong> · km {fmtNum(g.river_km, 0)} · {fmtNum(g.level_cm, 0)} cm
-                {g.change_24h_cm != null && ` (${g.change_24h_cm > 0 ? "+" : ""}${fmtNum(g.change_24h_cm, 0)} / 24 h)`} · {gaugeDate} · ORGANISER
-              </Tooltip>
+              {near ? (
+                // Permanent labels stay short so they fit on a phone; tap the gauge for the rest.
+                <Tooltip permanent direction="left" offset={[-12, 0]}>
+                  <strong>{g.name}</strong> · {fmtNum(g.level_cm, 0)} cm
+                </Tooltip>
+              ) : (
+                <Tooltip direction="left" offset={[-12, 0]}>
+                  <strong>{g.name}</strong> · km {fmtNum(g.river_km, 0)} · {fmtNum(g.level_cm, 0)} cm
+                  {g.change_24h_cm != null && ` (${g.change_24h_cm > 0 ? "+" : ""}${fmtNum(g.change_24h_cm, 0)} / 24 h)`} · {gaugeDate} · ORGANISER
+                </Tooltip>
+              )}
             </Marker>
           );
         })}
@@ -223,8 +274,9 @@ export function RiverMap({ stations, edges, levels = {}, source, downstream = {}
   const fitPoints = useMemo(() => [...Object.values(pos), ...(iskar ? iskar.stations.map((s) => [s.lat, s.lon] as [number, number]) : [])], [pos, iskar]);
 
   return (
-    <MapContainer center={[43.75, 24.9]} zoom={8} className="pn-muted-tiles h-full w-full" attributionControl>
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" maxZoom={19} />
+    <MapContainer center={[43.75, 24.9]} zoom={8} className="pn-muted-tiles pn-vector-base h-full w-full" attributionControl>
+      {TILES_ENABLED && <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" maxZoom={19} />}
+      <VectorBasemap />
       <FitRiver points={fitPoints} />
       {edges.map((e) => {
         const a = pos[e.from_station];
