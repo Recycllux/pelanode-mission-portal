@@ -34,10 +34,10 @@ function DualVisionPage() {
 
   return (
     <AppShell screen="Dual Vision">
-      <div className="mx-auto max-w-[1600px] space-y-6 px-6 py-6">
+      <div className="mx-auto max-w-[1600px] space-y-6 px-4 py-4 sm:px-6 sm:py-6">
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Dual Vision</h1>
+            <h1 className="text-xl font-bold sm:text-2xl">Dual Vision</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Each event seen by both PelaNode cameras at the same moment: surface camera on the left, underwater camera on the right. The AI box is drawn on the camera that raised the event.
             </p>
@@ -75,7 +75,7 @@ function EventPair({ e }: { e: Event }) {
           <Link to="/events/$eventId" params={{ eventId: e.event_id }}>Open event</Link>
         </Button>
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div>
           <CameraLabel text="Surface camera · above water" active={above} />
           {above ? detected : paired}

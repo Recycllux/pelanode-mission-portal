@@ -22,7 +22,7 @@ function EventPage() {
   const navigate = useNavigate();
   return (
     <AppShell screen="Event Detail">
-      <div className="mx-auto max-w-[1600px] px-6 py-6">
+      <div className="mx-auto max-w-[1600px] px-4 py-4 sm:px-6 sm:py-6">
         <Link to="/events" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-teal hover:underline"><ChevronLeft className="h-4 w-4" /> Event Timeline</Link>
         <EventDetailView
           eventId={eventId}

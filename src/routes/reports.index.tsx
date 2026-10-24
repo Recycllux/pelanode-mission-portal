@@ -59,10 +59,10 @@ function ReportsPage() {
 
   return (
     <AppShell screen="Reports">
-      <div className="mx-auto max-w-[1600px] space-y-6 px-6 py-6">
+      <div className="mx-auto max-w-[1600px] space-y-6 px-4 py-4 sm:px-6 sm:py-6">
         <div className="flex flex-wrap items-center gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Mission report · {r?.mission_id}</h1>
+            <h1 className="text-xl font-bold sm:text-2xl">Mission report · {r?.mission_id}</h1>
             <p className="text-sm text-muted-foreground">Data up to mission time {fmtUtc(r?.until)} · <SourceChip source={r?.data_origin ?? "simulated"} /></p>
           </div>
           <div className="ml-auto flex flex-wrap gap-2">

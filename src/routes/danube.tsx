@@ -94,10 +94,10 @@ function DanubePage() {
 
   return (
     <AppShell screen="Danube Forecast">
-      <div className="mx-auto max-w-[1600px] space-y-6 px-6 py-6">
+      <div className="mx-auto max-w-[1600px] space-y-6 px-4 py-4 sm:px-6 sm:py-6">
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Danube level forecast · {f ? `${f.station.name} (km ${f.station.river_km})` : "…"}</h1>
+            <h1 className="text-xl font-bold sm:text-2xl">Danube level forecast · {f ? `${f.station.name} (km ${f.station.river_km})` : "…"}</h1>
             <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <SourceChip source="organiser" label="Organiser data · 2021" />
               Forecast for the reach of mission {MISSION_ID}, from {f?.model.predictors.length ?? "…"} upstream gauges. Data replayed as of a past date.
@@ -132,7 +132,7 @@ function DanubePage() {
 
         {f && <SummaryCards f={f} />}
 
-        <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
           <div className="rounded-lg border bg-card p-4">
             <h2 className="mb-1 text-sm font-bold uppercase tracking-wide">Level at {f?.station.name ?? "…"}: observed, forecast and what actually happened</h2>
             <p className="mb-3 text-xs text-muted-foreground">Shaded band is about 80% of past forecast errors. Dashed grey shows the observations after the issue date, for checking.</p>
@@ -178,7 +178,7 @@ function SummaryCards({ f }: { f: DanubeForecast }) {
   const change = last.level_cm - f.observed_level_cm;
   const rec = f.recommendation;
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       <div className="rounded-lg border bg-card p-5">
         <div className="text-sm text-muted-foreground">Observed {fmtDay(f.as_of)}</div>
         <div className="text-3xl font-bold tabular">{cm(f.observed_level_cm)}</div>

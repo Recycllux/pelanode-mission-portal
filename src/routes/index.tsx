@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, BatteryMedium, Gauge, Navigation, Ruler, Satellite, Timer, Wifi } from "lucide-react";
+import { AlertTriangle, BatteryMedium, ChevronDown, Gauge, Navigation, Ruler, Satellite, Timer, Wifi } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
@@ -31,10 +31,10 @@ export const Route = createFileRoute("/")({
 
 function Stat({ icon, k, v, source }: { icon: ReactNode; k: string; v: ReactNode; source?: ReactNode }) {
   return (
-    <div className="flex items-center gap-3 py-1.5">
+    <div className="flex items-center gap-2 py-1.5 sm:gap-3">
       <span className="text-muted-foreground">{icon}</span>
-      <span className="w-28 text-sm text-muted-foreground">{k}</span>
-      <span className="flex-1 text-sm font-semibold tabular">{v}</span>
+      <span className="w-24 shrink-0 text-sm text-muted-foreground sm:w-28">{k}</span>
+      <span className="min-w-0 flex-1 text-sm font-semibold tabular">{v}</span>
       {source}
     </div>
   );
@@ -52,6 +52,8 @@ function MissionMapPage() {
   const [layers, setLayers] = useState<MapLayers>({ track: true, events: true, discharge: false, level: false, gauges: true });
   const gaugesQ = useDanubeGauges();
   const [focusKey, setFocusKey] = useState(0);
+  // Layers panel starts collapsed on phones/tablets so it does not cover the map.
+  const [layersOpen, setLayersOpen] = useState(() => typeof window === "undefined" || window.matchMedia("(min-width: 1024px)").matches);
 
   const selectedId = search.event;
   const selected = events.find((e) => e.event_id === selectedId);
@@ -87,15 +89,34 @@ function MissionMapPage() {
     { key: "gauges", label: "Danube gauges", source: <SourceChip source="organiser" label="Real 2021" /> },
   ];
 
+  const legend = (
+    <>
+      <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="unreviewed" confidence={1} size={14} /> Above water</span>
+      <span className="flex items-center gap-1"><EventGlyph perspective="below" tone="unreviewed" confidence={1} size={14} /> Below water</span>
+      <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="required" confidence={1} size={14} /> Review required</span>
+      <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="confirmed" confidence={1} size={14} /> Confirmed</span>
+      <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="unreviewed" confidence={0.3} size={14} /> Low confidence (hollow)</span>
+    </>
+  );
+
   return (
     <AppShell screen="Mission Map" fill>
       <div className="flex h-full flex-col">
-        <div className="flex min-h-0 flex-1">
-          <div className="relative isolate min-w-0 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+          <div className="relative isolate h-[60svh] min-h-[340px] min-w-0 lg:h-auto lg:min-h-0 lg:flex-1">
             <LazyMap initialBbox={mission?.area_bbox} track={track} events={events} datasets={ctx?.datasets} gauges={gaugesQ.isError ? [] : gaugesQ.data?.points} gaugeDate={DANUBE_REPLAY_DATE} latest={latest} layers={layers} selectedId={selectedId} focus={focus} onSelectEvent={select} />
 
-            <div className="absolute left-14 top-3 z-[500] w-64 rounded-lg border bg-card/95 p-3 shadow-lg backdrop-blur">
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Layers</h2>
+            <div className="absolute left-12 top-2.5 z-[500] max-h-[calc(100%-1.25rem)] w-[min(16rem,calc(100%-3.75rem))] overflow-y-auto rounded-lg border bg-card/95 p-3 shadow-lg backdrop-blur sm:left-14 sm:top-3 sm:w-64">
+              <button
+                type="button"
+                onClick={() => setLayersOpen((o) => !o)}
+                aria-expanded={layersOpen}
+                className="flex w-full items-center justify-between text-xs font-bold uppercase tracking-wide text-muted-foreground lg:pointer-events-none"
+              >
+                <h2>Layers</h2>
+                <ChevronDown className={`h-4 w-4 transition lg:hidden ${layersOpen ? "rotate-180" : ""}`} aria-hidden />
+              </button>
+              <div className={layersOpen ? "mt-2" : "hidden"}>
               {layerRows.map((l) => (
                 <label key={l.key} className="flex min-h-10 cursor-pointer items-center gap-2">
                   <Switch checked={layers[l.key]} onCheckedChange={(v) => setLayers((s) => ({ ...s, [l.key]: v }))} aria-label={l.label} />
@@ -124,19 +145,17 @@ function MissionMapPage() {
                   Real gauge levels from the organiser's Danube data, shown as of {DANUBE_REPLAY_DATE} (the 2026 mission is replayed against 2021). Positions are approximate.
                 </p>
               )}
+              <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 border-t pt-2 text-xs sm:hidden">{legend}</div>
+              </div>
             </div>
 
-            <div className="absolute bottom-3 left-3 z-[500] flex flex-wrap gap-3 rounded-lg border bg-card/95 px-3 py-2 text-xs shadow">
-              <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="unreviewed" confidence={1} size={14} /> Above water</span>
-              <span className="flex items-center gap-1"><EventGlyph perspective="below" tone="unreviewed" confidence={1} size={14} /> Below water</span>
-              <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="required" confidence={1} size={14} /> Review required</span>
-              <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="confirmed" confidence={1} size={14} /> Confirmed</span>
-              <span className="flex items-center gap-1"><EventGlyph perspective="above" tone="unreviewed" confidence={0.3} size={14} /> Low confidence (hollow)</span>
+            <div className="absolute bottom-3 left-3 right-3 z-[500] hidden flex-wrap gap-3 rounded-lg border bg-card/95 px-3 py-2 text-xs shadow sm:right-auto sm:flex sm:max-w-[calc(100%-1.5rem)]">
+              {legend}
             </div>
           </div>
 
-          <aside className="flex w-[420px] shrink-0 flex-col overflow-y-auto border-l bg-card">
-            <section className="border-b p-5">
+          <aside className="flex w-full shrink-0 flex-col border-t bg-card lg:w-[420px] lg:overflow-y-auto lg:border-l lg:border-t-0">
+            <section className="border-b p-4 sm:p-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Mission status</h2>
                 <SourceChip source={mission?.data_origin ?? "simulated"} />
@@ -154,7 +173,7 @@ function MissionMapPage() {
               </div>
             </section>
 
-            <section className="grid grid-cols-3 gap-2 border-b p-5">
+            <section className="grid grid-cols-3 gap-2 border-b p-4 sm:p-5">
               {[
                 { k: "Events", v: mission?.counts.events ?? 0 },
                 { k: "Review required", v: mission?.counts.review_required ?? 0, warn: true },
@@ -167,7 +186,7 @@ function MissionMapPage() {
               ))}
             </section>
 
-            <section className="flex-1 p-5">
+            <section className="flex-1 p-4 sm:p-5">
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">Review queue</h2>
               {queue.length === 0 ? (
                 <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -201,7 +220,7 @@ function MissionMapPage() {
       </div>
 
       <Sheet open={!!selectedId} onOpenChange={(o) => !o && select(undefined)}>
-        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-[820px]">
+        <SheetContent side="right" className="w-full overflow-y-auto p-4 sm:max-w-[820px] sm:p-6">
           <SheetTitle className="sr-only">Event detail</SheetTitle>
           <SheetDescription className="sr-only">Evidence, model output, review and associated context</SheetDescription>
           {selectedId && (

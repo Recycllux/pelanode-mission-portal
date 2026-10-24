@@ -44,9 +44,9 @@ function DatasetsPage() {
 
   return (
     <AppShell screen="Datasets">
-      <div className="mx-auto max-w-[1600px] space-y-6 px-6 py-6">
+      <div className="mx-auto max-w-[1600px] space-y-6 px-4 py-4 sm:px-6 sm:py-6">
         <div>
-          <h1 className="text-2xl font-bold">Datasets</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">Datasets</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Everything the portal shows next to PelaNode observations, with its source. Context values are associated with events by time and distance only; they do not explain them.
           </p>
@@ -56,7 +56,7 @@ function DatasetsPage() {
 
         <section className="space-y-3">
           <h2 className="text-sm font-bold uppercase tracking-wide">Mission context · {mission?.mission_id ?? "…"}</h2>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {(ctx?.datasets ?? []).map((d) => (
               <DatasetCard key={d.dataset_id} d={d} all={ctx?.records ?? []} visible={visible} />
             ))}
@@ -70,7 +70,7 @@ function DatasetsPage() {
             {visible.length === 0 ? (
               <p className="text-sm text-muted-foreground">No records at this mission time.</p>
             ) : (
-              <Table>
+              <Table className="min-w-[560px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Observed</TableHead>
@@ -155,7 +155,7 @@ function DatasetsPage() {
           {!point.data ? (
             <p className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">{point.isError ? `Climate data unavailable: ${(point.error as Error).message}` : "Loading…"}</p>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {point.data.climate.map((c) => (
                 <div key={c.variable} className="rounded-lg border bg-card p-4">
                   <div className="font-semibold">{c.name}</div>
