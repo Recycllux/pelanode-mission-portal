@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the offline vector basemap (public/basemap/danube-basemap.json) from Natural Earth 1:10m.
+"""Build the offline vector basemap (src/data/danube-basemap.json) from Natural Earth 1:10m.
 
 The portal draws this under the raster tiles, so the map still has land, borders, rivers, lakes, roads
 and towns where tiles can't load (offline demos, sandboxed previews). Natural Earth is public domain.
@@ -15,7 +15,7 @@ from pathlib import Path
 # Danube basin, Black Forest to the Black Sea (covers every gauge the portal shows).
 BBOX = (8.0, 41.5, 30.5, 50.5)  # min_lon, min_lat, max_lon, max_lat
 TOLERANCE = 0.002  # degrees (~200 m) for Douglas-Peucker
-OUT = Path(__file__).resolve().parent.parent / "public" / "basemap" / "danube-basemap.json"
+OUT = Path(__file__).resolve().parent.parent / "src" / "data" / "danube-basemap.json"
 
 
 def load(src, name):
