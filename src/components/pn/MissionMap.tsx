@@ -2,10 +2,22 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useMemo, useRef } from "react";
-import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
 import { haversineKm } from "@/api/mock-data";
-import type { ContextDataset, ContextRecord, DanubeProfilePoint, EventSummary, TrackPoint } from "@/api/types";
-import { LOW_CONFIDENCE, fmtNum, fmtUtc, humanize, reviewTone } from "@/lib/pn-format";
+import type {
+  ConfluenceNode,
+  ContextDataset,
+  ContextRecord,
+  DanubeDownstreamWindow,
+  DanubeEdge,
+  DanubeProfilePoint,
+  DanubeStations,
+  EventSummary,
+  IskarStation,
+  TemperatureCandidateAnomaly,
+  TrackPoint,
+} from "@/api/types";
+import { LOW_CONFIDENCE, fmtNum, fmtUtc, humanize, reviewTone, windowText } from "@/lib/pn-format";
 
 export interface MapLayers {
   track: boolean;
@@ -157,6 +169,137 @@ export default function MissionMap({ track, events, datasets = [], gauges, gauge
           <Tooltip direction="bottom" offset={[0, 18]}>PN-MVP-001 · heading {Math.round(head.heading_deg)}° · {fmtUtc(head.captured_at)}</Tooltip>
         </Marker>
       )}
+    </MapContainer>
+  );
+}
+
+/* ---------- Connected river map (P0-19 v1.3): station graph, monitoring windows, candidate anomalies, Iskar handoff ---------- */
+
+export interface RiverMapProps {
+  stations: DanubeStations["stations"];
+  edges: DanubeEdge[];
+  /** Level on the selected day, by station id (organiser data 2021, shown on the 2025 scenario timeline). */
+  levels?: Record<string, DanubeProfilePoint> | undefined;
+  source?: string | null | undefined;
+  /** Operational windows from the source (or from the Iskar handoff gauges), by station id. */
+  downstream?: Record<string, DanubeDownstreamWindow> | undefined;
+  /** Candidate anomalies on the selected day, by station id. */
+  anomalies?: Record<string, TemperatureCandidateAnomaly> | undefined;
+  iskar?: { stations: IskarStation[]; confluence: ConfluenceNode } | null | undefined;
+  /** Gauges that receive the Iskar handoff (Corabia, Zagrazhden) while a tributary event is open. */
+  handoffGauges?: string[] | undefined;
+  selectedStation?: string | null | undefined;
+  onSelectStation?: ((id: string) => void) | undefined;
+  onSelectEdge?: ((e: DanubeEdge) => void) | undefined;
+  onSelectIskar?: (() => void) | undefined;
+}
+
+const CLASS_STROKE = { A: "var(--teal)", B: "var(--attention)", C: "var(--review)" } as const;
+
+const confluenceIcon = L.divIcon({
+  className: "pn-divicon",
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  html: `<svg width="22" height="22" viewBox="0 0 22 22"><path d="M11 2 L20 11 L11 20 L2 11 Z" fill="var(--attention-soft)" stroke="var(--attention)" stroke-width="2.5" stroke-dasharray="3 2"/></svg>`,
+});
+
+function FitRiver({ points }: { points: [number, number][] }) {
+  const map = useMap();
+  const fitted = useRef(false);
+  useEffect(() => {
+    if (fitted.current || points.length < 2) return;
+    fitted.current = true;
+    map.fitBounds(L.latLngBounds(points), { padding: [24, 24] });
+  }, [points.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
+export function RiverMap({ stations, edges, levels = {}, source, downstream = {}, anomalies = {}, iskar, handoffGauges = [], selectedStation, onSelectStation, onSelectEdge, onSelectIskar }: RiverMapProps) {
+  const placed = useMemo(
+    () => stations.filter((s) => s.in_propagation_model && s.station.lat != null && s.station.lon != null),
+    [stations],
+  );
+  const pos = useMemo(() => Object.fromEntries(placed.map((s) => [s.station.station_id, [s.station.lat!, s.station.lon!] as [number, number]])), [placed]);
+  const fitPoints = useMemo(() => [...Object.values(pos), ...(iskar ? iskar.stations.map((s) => [s.lat, s.lon] as [number, number]) : [])], [pos, iskar]);
+
+  return (
+    <MapContainer center={[43.75, 24.9]} zoom={8} className="pn-muted-tiles h-full w-full" attributionControl>
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" maxZoom={19} />
+      <FitRiver points={fitPoints} />
+      {edges.map((e) => {
+        const a = pos[e.from_station];
+        const b = pos[e.to_station];
+        if (!a || !b) return null;
+        return (
+          <Polyline
+            key={`${e.from_station}>${e.to_station}`}
+            positions={[a, b]}
+            pathOptions={{ color: CLASS_STROKE[e.quality_class], weight: e.quality_class === "A" ? 5 : e.quality_class === "B" ? 4 : 3, opacity: 0.85, dashArray: e.quality_class === "C" ? "6 6" : undefined }}
+            eventHandlers={{ click: () => onSelectEdge?.(e) }}
+          >
+            <Tooltip sticky>
+              {e.from_station} → {e.to_station} · class {e.quality_class} · lag {e.optimal_lag_days_level ?? "—"} d (level) / {e.optimal_lag_days_delta_h ?? "—"} d (Δh) · r_Δh {fmtNum(e.r_delta_h ?? 0, 2)} · n {e.n_common_observations}
+              {e.reason && ` · ${e.reason}`}
+            </Tooltip>
+          </Polyline>
+        );
+      })}
+      {iskar && (
+        <>
+          <Polyline
+            positions={[...[...iskar.stations].sort((x, y) => x.lat - y.lat).map((s) => [s.lat, s.lon] as [number, number]), [iskar.confluence.lat, iskar.confluence.lon]]}
+            pathOptions={{ color: "var(--attention)", weight: 3, opacity: 0.9, dashArray: "4 6" }}
+            eventHandlers={{ click: () => onSelectIskar?.() }}
+          >
+            <Tooltip sticky>Iskar (2025) · scenario-aligned tributary · no native overlap with Danube 2021</Tooltip>
+          </Polyline>
+          {iskar.stations.map((s) => (
+            <CircleMarker key={s.station_id} center={[s.lat, s.lon]} radius={6} pathOptions={{ color: "var(--attention)", fillColor: "var(--attention-soft)", fillOpacity: 1, weight: 2 }} eventHandlers={{ click: () => onSelectIskar?.() }}>
+              <Tooltip direction="left">{s.name} · Iskar discharge (2025) · SCENARIO-ALIGNED</Tooltip>
+            </CircleMarker>
+          ))}
+          <Marker position={[iskar.confluence.lat, iskar.confluence.lon]} icon={confluenceIcon} eventHandlers={{ click: () => onSelectIskar?.() }} zIndexOffset={500}>
+            <Tooltip direction="bottom" offset={[0, 10]}>Iskar confluence · Danube ~km {iskar.confluence.river_km} · scenario handoff node</Tooltip>
+          </Marker>
+        </>
+      )}
+      {placed.map(({ station: st, has_temperature }) => {
+        const id = st.station_id;
+        const w = downstream[id];
+        const an = anomalies[id];
+        const primary = an?.model_output.role === "primary";
+        const isSource = id === source;
+        const isHandoff = handoffGauges.includes(id);
+        const lv = levels[id];
+        const fill = isSource || isHandoff ? "var(--navy)" : primary ? "var(--attention)" : w ? "var(--teal)" : an ? "var(--lowconf)" : "var(--card)";
+        const permanent = isSource || isHandoff || !!w || primary;
+        return (
+          <CircleMarker
+            key={`${id}-${permanent}`}
+            center={pos[id]!}
+            radius={isSource || primary || isHandoff ? 9 : w ? 7 : 5}
+            pathOptions={{ color: primary ? "var(--review)" : id === selectedStation ? "var(--navy)" : "var(--navy)", weight: id === selectedStation ? 4 : 2, fillColor: fill, fillOpacity: 1 }}
+            eventHandlers={{ click: () => onSelectStation?.(id) }}
+          >
+            <Tooltip permanent={permanent} direction={st.source === "automatic" ? "bottom" : "top"} offset={[0, st.source === "automatic" ? 8 : -8]}>
+              <strong>{st.name}</strong>
+              {isSource && " · source"}
+              {isHandoff && " · Iskar handoff gauge"}
+              {w && ` · ${windowText(w.window_days)} (${w.quality_class})`}
+              {primary && ` · candidate z ${fmtNum(an!.model_output.robust_z, 1)}`}
+              {an && !primary && " · neighbour-influenced"}
+              {!permanent && (
+                <>
+                  {" "}· km {fmtNum(st.river_km ?? 0, 0)}
+                  {lv && ` · ${fmtNum(lv.level_cm, 0)} cm`}
+                  {lv?.water_temp_c != null && ` · ${fmtNum(lv.water_temp_c, 1)} °C`}
+                  {has_temperature ? "" : " · level only"}
+                </>
+              )}
+            </Tooltip>
+          </CircleMarker>
+        );
+      })}
     </MapContainer>
   );
 }

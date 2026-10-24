@@ -52,6 +52,8 @@ export const PROVENANCE_LABEL: Record<Provenance, string> = {
   organiser: "ORGANISER",
   measured: "MEASURED",
   live: "LIVE",
+  derived_from_organiser: "DERIVED · ORGANISER",
+  supplied_dataset: "SUPPLIED DATASET",
 };
 
 /** Spatial/temporal relation wording. Always association only — never cause. */
@@ -101,4 +103,21 @@ export function uuid() {
     const r = (Math.random() * 16) | 0;
     return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
   });
+}
+
+/** Display name from a Danube/Iskar station id (TURNU_MAGURELE → Turnu Magurele). */
+export function stationName(id: string): string {
+  return id
+    .toLowerCase()
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/** Estimated monitoring window in words: "same day", "~1 day", "~2–3 days". */
+export function windowText(w: { min: number; max: number } | null | undefined): string {
+  if (!w) return "not shown";
+  if (w.max === 0) return "same day";
+  if (w.min === w.max) return `~${w.min} ${w.min === 1 ? "day" : "days"}`;
+  return w.min === 0 ? `same day–${w.max} ${w.max === 1 ? "day" : "days"}` : `~${w.min}–${w.max} days`;
 }

@@ -1,7 +1,7 @@
 // All API types. Field names mirror the Spring Boot API contract (snake_case).
 
 export type DataOrigin = "live" | "recorded" | "replayed" | "simulated";
-export type Provenance = "simulated" | "replayed" | "recorded" | "placeholder" | "organiser" | "measured" | "live";
+export type Provenance = "simulated" | "replayed" | "recorded" | "placeholder" | "organiser" | "measured" | "live" | "derived_from_organiser" | "supplied_dataset";
 export type Perspective = "above" | "below";
 export type ReviewStatus = "unreviewed" | "confirmed" | "relabelled" | "dismissed";
 /** reject -> status "dismissed"; leave_open keeps the event unreviewed. */
@@ -271,11 +271,23 @@ export interface DanubeThresholds {
   basis: string;
 }
 
+/** Common 2025 scenario timeline (P0-19 §4.7): records keep their source date and are shown on 2025-MM-DD. */
+export interface ScenarioInfo {
+  year: number;
+  source_year: number;
+  time_alignment_method: "native_2025" | "year_harmonised_to_2025";
+  scenario_assumption: boolean;
+  /** "SCENARIO 2025 / SOURCE HISTORICAL" for harmonised data, "SCENARIO 2025" for native 2025 data. */
+  badge: string;
+  note: string;
+}
+
 interface DanubeHeader {
   provenance: Provenance;
   source: string;
   data_from: string;
   data_to: string;
+  scenario?: ScenarioInfo;
 }
 
 export interface DanubeProfilePoint {
@@ -294,6 +306,7 @@ export interface DanubeProfilePoint {
 export interface DanubeProfile extends DanubeHeader {
   river: string;
   date: string;
+  scenario_date?: string | null;
   points: DanubeProfilePoint[];
 }
 
@@ -327,6 +340,8 @@ export interface DanubePointContext {
     water_temp_c: number | null;
     thresholds: DanubeThresholds;
     forecastable: boolean;
+    downstream_windows?: DanubeDownstreamWindow[];
+    downstream_windows_note?: string;
   } | null;
   climate: DanubePointClimate[];
   provenance: Provenance;
@@ -336,7 +351,7 @@ export interface DanubePointContext {
 export interface DanubeSeries extends DanubeHeader {
   station: DanubeStation;
   thresholds: DanubeThresholds;
-  series: { date: string; level_cm: number | null; water_temp_c: number | null }[];
+  series: { date: string; scenario_date?: string | null; level_cm: number | null; water_temp_c: number | null }[];
 }
 
 export interface DanubeForecastPoint {
@@ -388,4 +403,238 @@ export interface DanubeBacktest extends DanubeHeader {
     improvement_pct: number | null;
   }[];
   threshold_crossings: { type: "low_water" | "high_water"; observed_on: string; level_cm: number; warned_days_ahead: number | null }[];
+}
+
+/* ---------- Connected river intelligence (P0-19 v1.3: /danube/lags, /danube/anomalies, /scenario/...) ---------- */
+
+export type QualityClass = "A" | "B" | "C";
+export type DanubeChain = "ro_bulletin" | "bg_automatic" | "upstream_of_iron_gates" | "tributary";
+
+export interface DanubeStations extends DanubeHeader {
+  stations: {
+    station: DanubeStation;
+    coverage: number;
+    forecastable: boolean;
+    thresholds: DanubeThresholds;
+    temperature_coverage?: number;
+    has_temperature?: boolean;
+    chain?: DanubeChain;
+    in_propagation_model?: boolean;
+  }[];
+  contextual_sources?: {
+    station: IskarStation;
+    variable: string;
+    data_from: string;
+    data_to: string;
+    native_overlap_with_danube_days: number;
+    compatibility_state: CompatibilityState;
+    label: string;
+  }[];
+}
+
+export interface DanubeWindowDays {
+  min: number;
+  max: number;
+}
+
+/** Lagged correlation between two gauges of one chain. The lag is a river-level signal, never a pollutant travel time. */
+export interface DanubeEdge {
+  from_station: string;
+  to_station: string;
+  chain: DanubeChain;
+  distance_km: number;
+  n_common_observations: number;
+  n_common_delta_h: number;
+  data_gap_rate: number;
+  r_level_lag0: number | null;
+  optimal_lag_days_level: number | null;
+  r_level_optimal_lag: number | null;
+  optimal_lag_days_delta_h: number | null;
+  r_delta_h: number | null;
+  r_delta_h_at_level_lag: number | null;
+  /** null for class C (not operational). */
+  monitoring_window_days: DanubeWindowDays | null;
+  quality_class: QualityClass;
+  operational: boolean;
+  reason: string | null;
+  reliability: number;
+}
+
+export interface DanubeDownstreamWindow {
+  station_id: string;
+  distance_km: number;
+  window_days: DanubeWindowDays;
+  r_delta_h: number | null;
+  quality_class: QualityClass;
+  label: string;
+}
+
+export interface DanubeLags extends DanubeHeader {
+  period: { from: string; to: string };
+  method: { id: string; max_lag_days: number; min_n: number; class_rules: string; reliability: string; status: string };
+  /** Present without `source`: stations of each lower-Danube chain, upstream to downstream. */
+  chains?: Record<"ro_bulletin" | "bg_automatic", string[]>;
+  source_station?: DanubeStation;
+  chain?: DanubeChain;
+  max_distance_km?: number;
+  edges: DanubeEdge[];
+  downstream_windows?: DanubeDownstreamWindow[];
+  label: string;
+  note: string;
+}
+
+export type AnomalyRole = "primary" | "neighbour_influenced";
+
+export interface TemperatureCandidateAnomaly {
+  event_type: "temperature_candidate_anomaly";
+  event_id: string;
+  observation: { station_id: string; date: string; scenario_date: string | null; water_temp_c: number; provenance: Provenance };
+  model_output: {
+    method: string;
+    neighbours: string[];
+    expected_temp_c: number;
+    residual_c: number;
+    robust_z: number;
+    threshold: number;
+    threshold_status: string;
+    reference_type: "two_sided" | "one_sided";
+    role: AnomalyRole;
+    influenced_by: string | null;
+    influenced: string[];
+  };
+  data_quality: { station_coverage: number };
+  attention: "review_required";
+  label: string;
+  review: { status: string };
+  source_attribution: null;
+}
+
+export interface AnomalyStationStats {
+  station_id: string;
+  neighbours: string[];
+  reference_type: "two_sided" | "one_sided";
+  n: number;
+  baseline_median_c: number;
+  baseline_mad_c: number;
+  candidates_primary: number;
+  candidates_influenced: number;
+}
+
+export interface DanubeAnomalies extends DanubeHeader {
+  period: { from: string; to: string };
+  method: { id: string; threshold: number; threshold_status: string; sigma: string };
+  stations: AnomalyStationStats[];
+  candidates: TemperatureCandidateAnomaly[];
+  label: string;
+  note: string;
+}
+
+export type CompatibilityState = "DEMONSTRATED" | "SCENARIO-ALIGNED" | "CONTEXT ONLY" | "OPTIONAL CONTEXT" | "FUTURE";
+
+export interface ScenarioWindow {
+  from: string | null;
+  to: string | null;
+  days?: number;
+  note?: string;
+}
+
+export interface ScenarioDataset {
+  dataset_id: string;
+  name: string;
+  source_years: number[];
+  scenario_window: { source_from: string; source_to: string; scenario_from: string; scenario_to: string } | null;
+  compatibility_state: CompatibilityState;
+  allowed_use: string;
+  checks: Record<string, string>;
+}
+
+export interface ScenarioDatasets {
+  scenario: ScenarioInfo;
+  shared_window: ScenarioWindow;
+  datasets: ScenarioDataset[];
+  rule: string;
+}
+
+export interface IskarStation {
+  station_id: string;
+  name: string;
+  name_bg: string;
+  river: string;
+  lat: number;
+  lon: number;
+  coords_approx: boolean;
+}
+
+export interface ConfluenceNode {
+  river: string;
+  river_km: number;
+  scenario_node: string;
+  lat: number;
+  lon: number;
+  coords_approx: boolean;
+}
+
+export interface IskarSeries {
+  provenance: string;
+  source: string;
+  compatibility_state: CompatibilityState;
+  scenario: ScenarioInfo;
+  shared_window: ScenarioWindow;
+  label: string;
+  from: string;
+  to: string;
+  stations: {
+    station: IskarStation;
+    days_present: number;
+    days_missing: number;
+    series: { date: string; scenario_date: string | null; discharge_m3s: number }[];
+  }[];
+  confluence: ConfluenceNode;
+  suggested_events: { station_id: string; scenario_date: string; discharge_m3s: number; change_24h_m3s: number }[];
+}
+
+export interface HandoffWindow {
+  station_id: string;
+  distance_km: number;
+  quality_class: QualityClass;
+  r_delta_h: number | null;
+  n_common_observations: number;
+  window_days?: DanubeWindowDays;
+  reason?: string;
+}
+
+/** Scenario-aligned Iskar input handed off at the confluence; never a measured Iskar → Danube propagation. */
+export interface TributaryInputEvent {
+  event_type: "tributary_input_event";
+  event_id: string;
+  observation: {
+    tributary: string;
+    station_id: string;
+    source_date: string;
+    source_year: number;
+    scenario_date: string | null;
+    time_alignment_method: string;
+    data_origin: string;
+    scenario_assumption: boolean;
+    claim_scope: string;
+    discharge_m3s: number;
+    change_24h_m3s: number | null;
+    provenance: string;
+  };
+  confluence: ConfluenceNode;
+  handoff: {
+    chain: DanubeChain;
+    gauge: string;
+    gauge_name: string;
+    km_below_confluence: number;
+    downstream_windows: HandoffWindow[];
+    excluded: HandoffWindow[];
+  }[];
+  windows_period: { source: string; scenario_assumption: boolean };
+  claim_scope: "scenario_aligned";
+  attention: "informational";
+  label: string;
+  suggested_action: string;
+  note: string;
+  caveat?: string;
 }

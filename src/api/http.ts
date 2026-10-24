@@ -1,12 +1,16 @@
 import { getPnKey, type PelaApi } from "./client";
 import type {
+  DanubeAnomalies,
   DanubeBacktest,
   DanubeForecast,
+  DanubeLags,
   DanubePointContext,
   DanubeProfile,
   DanubeSeries,
+  DanubeStations,
   Event,
   EventSummary,
+  IskarSeries,
   ExportFormat,
   ExportResult,
   MissionContext,
@@ -17,7 +21,9 @@ import type {
   ReportSummary,
   ReviewRequest,
   ReviewResponse,
+  ScenarioDatasets,
   TrackPoint,
+  TributaryInputEvent,
 } from "./types";
 
 const enc = encodeURIComponent;
@@ -73,6 +79,13 @@ export class HttpApi implements PelaApi {
   getDanubeBacktest = (stationId: string) => this.get<DanubeBacktest>(`/danube/backtest?station=${enc(stationId)}`);
   getDanubePoint = (lat: number, lon: number, asOf: string) =>
     this.get<DanubePointContext>(`/danube/point?lat=${lat}&lon=${lon}&as_of=${enc(asOf)}`);
+  getDanubeStations = () => this.get<DanubeStations>(`/danube/stations`);
+  getDanubeLags = (source?: string) => this.get<DanubeLags>(`/danube/lags${source ? `?source=${enc(source)}` : ""}`);
+  getDanubeAnomalies = () => this.get<DanubeAnomalies>(`/danube/anomalies`);
+  getScenarioDatasets = () => this.get<ScenarioDatasets>(`/scenario/datasets`);
+  getIskarSeries = () => this.get<IskarSeries>(`/scenario/tributaries/iskar`);
+  createIskarEvent = (stationId: string, scenarioDate: string) =>
+    this.post<TributaryInputEvent>(`/scenario/tributaries/iskar/event`, { station_id: stationId, scenario_date: scenarioDate });
   mediaUrl = (uri: string | null) => (uri ? (/^https?:/.test(uri) ? uri : `${this.base}${uri}`) : null);
   fileUrl = (uri: string) => (/^(https?:|blob:)/.test(uri) ? uri : `${this.base}${uri}`);
 }

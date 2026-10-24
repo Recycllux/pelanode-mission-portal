@@ -1,11 +1,15 @@
 import type {
+  DanubeAnomalies,
   DanubeBacktest,
   DanubeForecast,
+  DanubeLags,
   DanubePointContext,
   DanubeProfile,
   DanubeSeries,
+  DanubeStations,
   Event,
   EventSummary,
+  IskarSeries,
   ExportFormat,
   ExportResult,
   MissionDetail,
@@ -16,7 +20,9 @@ import type {
   ReportSummary,
   ReviewRequest,
   ReviewResponse,
+  ScenarioDatasets,
   TrackPoint,
+  TributaryInputEvent,
 } from "./types";
 
 export interface PelaApi {
@@ -40,6 +46,16 @@ export interface PelaApi {
   getDanubeBacktest(stationId: string): Promise<DanubeBacktest>;
   /** Real data at a position: nearest Danube gauge on asOf (2021) and the climate grid cell (2024, same calendar month). */
   getDanubePoint(lat: number, lon: number, asOf: string): Promise<DanubePointContext>;
+  getDanubeStations(): Promise<DanubeStations>;
+  /** Lagged propagation edges: adjacent gauges of both lower-Danube chains, or every downstream gauge from `source`. */
+  getDanubeLags(source?: string): Promise<DanubeLags>;
+  /** Candidate water-temperature anomalies (Bulgarian gauges, two-sided reference, threshold 4). */
+  getDanubeAnomalies(): Promise<DanubeAnomalies>;
+  /** Compatibility state per dataset on the common 2025 scenario timeline. */
+  getScenarioDatasets(): Promise<ScenarioDatasets>;
+  getIskarSeries(): Promise<IskarSeries>;
+  /** Scenario-aligned Iskar input event with the confluence handoff (computed, not stored). */
+  createIskarEvent(stationId: string, scenarioDate: string): Promise<TributaryInputEvent>;
   /** Resolve a /media/... URI to a loadable URL, or null when no real frame exists. */
   mediaUrl(uri: string | null): string | null;
   /** Resolve an export file_uri to an openable URL. */
