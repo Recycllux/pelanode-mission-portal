@@ -8,17 +8,30 @@ export const START_MS = Date.parse(MISSION_START);
 export const END_MS = Date.parse(MISSION_END);
 export const MIN = 60_000;
 
-const START_LAT = 43.899;
-const START_LON = 25.92;
-// ~1.7 km eastward at 43.9°N: 1° lon ≈ 80.2 km
-const TOTAL_DLON = 1.7 / 80.2;
+// Same drift as the backend seed (scripts/build_demo_pack.py): from a point on the Danube
+// channel between Giurgiu and Ruse, ~1.7 km downstream towards the second point, gentle meander.
+const START_LAT = 43.86846;
+const START_LON = 25.969883;
+const TOWARD_LAT = 43.903377;
+const TOWARD_LON = 26.050363;
+const M_PER_DEG_LAT = 111_320;
+const M_PER_DEG_LON = M_PER_DEG_LAT * Math.cos((START_LAT * Math.PI) / 180);
+const DRIFT_M = 1700;
+const MEANDER_M = 60;
 
 export function buildTrack(): TrackPoint[] {
   const pts: TrackPoint[] = [];
+  const dx = (TOWARD_LON - START_LON) * M_PER_DEG_LON;
+  const dy = (TOWARD_LAT - START_LAT) * M_PER_DEG_LAT;
+  const len = Math.hypot(dx, dy);
+  const ux = dx / len;
+  const uy = dy / len;
   for (let i = 0; i < 43; i++) {
     const f = i / 42;
-    const lat = START_LAT + 0.0011 * Math.sin(f * Math.PI * 1.3) + 0.0004 * f;
-    const lon = START_LON + TOTAL_DLON * (f + 0.03 * Math.sin(f * Math.PI * 2));
+    const along = DRIFT_M * f;
+    const side = MEANDER_M * Math.sin(f * Math.PI);
+    const lat = START_LAT + (uy * along + ux * side) / M_PER_DEG_LAT;
+    const lon = START_LON + (ux * along - uy * side) / M_PER_DEG_LON;
     pts.push({
       track_point_id: `TP-${MISSION_ID}-${String(i).padStart(4, "0")}`,
       mission_id: MISSION_ID,
