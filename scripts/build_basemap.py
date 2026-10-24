@@ -6,7 +6,9 @@ and towns where tiles can't load (offline demos, sandboxed previews). Natural Ea
 
 Usage: python3 scripts/build_basemap.py <dir with Natural Earth .geojson files>
 Needs: ne_10m_admin_0_countries, ne_10m_rivers_lake_centerlines, ne_10m_rivers_europe, ne_10m_lakes,
-ne_10m_lakes_europe, ne_10m_populated_places_simple, ne_10m_roads (github.com/nvkelso/natural-earth-vector).
+ne_10m_lakes_europe, ne_10m_populated_places_simple, ne_10m_roads, ne_10m_admin_0_boundary_lines_land,
+ne_50m_admin_0_countries,
+ne_50m_rivers_lake_centerlines, ne_50m_lakes, ne_50m_populated_places_simple (github.com/nvkelso/natural-earth-vector).
 """
 import json
 import sys
@@ -16,13 +18,16 @@ from pathlib import Path
 BBOX = (8.0, 41.5, 30.5, 50.5)  # min_lon, min_lat, max_lon, max_lat
 TOLERANCE = 0.002  # degrees (~200 m) for Douglas-Peucker
 OUT = Path(__file__).resolve().parent.parent / "src" / "data" / "danube-basemap.json"
+WORLD_OUT = OUT.with_name("world-basemap.json")
+WORLD_TOLERANCE = 0.04  # degrees (~2 km): the world layer only shows at low zoom or outside the basin
 
 
 def load(src, name):
     return json.loads((src / f"{name}.geojson").read_text(encoding="utf-8"))["features"]
 
 
-def simplify(pts, tol=TOLERANCE):
+def simplify(pts, tol=None):
+    tol = TOLERANCE if tol is None else tol
     if len(pts) < 3:
         return pts
     keep = [False] * len(pts)
@@ -88,8 +93,8 @@ def clip_line(line):
     return [r for r in runs if len(r) > 1]
 
 
-def rnd(pts):
-    return [[round(x, 4), round(y, 4)] for x, y in pts]
+def rnd(pts, digits=4):
+    return [[round(x, digits), round(y, digits)] for x, y in pts]
 
 
 def polygons(geom):
@@ -131,6 +136,8 @@ def line_features(feats, layer, keep, props):
 def main(src):
     feats = []
     feats += area_features(load(src, "ne_10m_admin_0_countries"), "country", lambda p: {"name": p.get("NAME_EN") or p.get("NAME")})
+    # Polygons are clipped to BBOX, so they are drawn as fill only and borders come from the boundary lines.
+    feats += line_features(load(src, "ne_10m_admin_0_boundary_lines_land"), "border", lambda p: True, lambda p: {})
     feats += area_features(load(src, "ne_10m_lakes") + load(src, "ne_10m_lakes_europe"), "lake", lambda p: {})
     feats += line_features(load(src, "ne_10m_roads"), "road", lambda p: p.get("type") in ("Major Highway", "Secondary Highway") and (p.get("scalerank") or 99) <= 7, lambda p: {"major": p.get("type") == "Major Highway"})
     rivers = load(src, "ne_10m_rivers_lake_centerlines") + load(src, "ne_10m_rivers_europe")
@@ -144,5 +151,36 @@ def main(src):
     print(f"{OUT}: {len(feats)} features, {OUT.stat().st_size / 1e6:.2f} MB")
 
 
+def world(src):
+    """Whole world at 1:50m, so the map never ends at the basin's edge. No clipping."""
+    feats = []
+    lakes = [f for f in load(src, "ne_50m_lakes") if (f["properties"].get("scalerank") or 99) <= 3]
+    for f in load(src, "ne_50m_admin_0_countries") + lakes:
+        layer = "lake" if f["properties"].get("featurecla") in ("Lake", "Reservoir", "Alkaline Lake") else "country"
+        polys = []
+        for poly in polygons(f["geometry"] or {"type": None}):
+            rings = [rnd(r, 3) for r in (simplify([tuple(p[:2]) for p in ring], WORLD_TOLERANCE) for ring in poly) if len(r) >= 4]
+            if rings:
+                polys.append(rings)
+        if polys:
+            feats.append({"type": "Feature", "properties": {"layer": layer}, "geometry": {"type": "MultiPolygon", "coordinates": polys}})
+    for f in load(src, "ne_50m_rivers_lake_centerlines"):
+        p = f["properties"]
+        if not f["geometry"] or p.get("featurecla") == "Lake Centerline" or (p.get("scalerank") or 99) > 5:
+            continue
+        parts = [rnd(simplify([tuple(q[:2]) for q in line], WORLD_TOLERANCE), 3) for line in lines(f["geometry"])]
+        parts = [x for x in parts if len(x) > 1]
+        if parts:
+            feats.append({"type": "Feature", "properties": {"layer": "river", "name": p.get("name"), "rank": p.get("scalerank")}, "geometry": {"type": "MultiLineString", "coordinates": parts}})
+    for f in load(src, "ne_50m_populated_places_simple"):
+        p, c = f["properties"], f["geometry"]["coordinates"]
+        # Inside the basin the detailed layer has its own towns.
+        if not in_bbox(c) and (p.get("scalerank") or 99) <= 4:
+            feats.append({"type": "Feature", "properties": {"layer": "place", "name": p.get("name"), "rank": p.get("scalerank"), "capital": bool(p.get("adm0cap"))}, "geometry": {"type": "Point", "coordinates": rnd([c])[0]}})
+    WORLD_OUT.write_text(json.dumps({"type": "FeatureCollection", "attribution": "Natural Earth (public domain)", "features": feats}, separators=(",", ":")), encoding="utf-8")
+    print(f"{WORLD_OUT}: {len(feats)} features, {WORLD_OUT.stat().st_size / 1e6:.2f} MB")
+
+
 if __name__ == "__main__":
     main(Path(sys.argv[1] if len(sys.argv) > 1 else "."))
+    world(Path(sys.argv[1] if len(sys.argv) > 1 else "."))
