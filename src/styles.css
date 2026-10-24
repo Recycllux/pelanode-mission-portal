@@ -132,7 +132,7 @@
   background: var(--muted);
 }
 .pn-muted-tiles .leaflet-tile-pane {
-  filter: grayscale(0.85) brightness(1.06) contrast(0.9);
+  filter: url(#pn-tile-tone) brightness(1.06) contrast(0.9);
 }
 .pn-divicon {
   background: none;
