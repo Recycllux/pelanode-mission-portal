@@ -287,9 +287,9 @@ export class MockApi implements PelaApi {
     return clone(DANUBE_PROFILES[snapshotKey(Object.keys(DANUBE_PROFILES), date)]!);
   }
 
-  async getDanubeSeries(_stationId: string) {
-    const { DANUBE_SERIES } = await import("./mock-danube");
-    return clone(DANUBE_SERIES);
+  async getDanubeSeries(stationId: string) {
+    const { DANUBE_SERIES, DANUBE_SERIES_BY_STATION } = await import("./mock-danube");
+    return clone(DANUBE_SERIES_BY_STATION[stationId.toUpperCase()] ?? DANUBE_SERIES);
   }
 
   async getDanubeBacktest(_stationId: string) {
@@ -304,6 +304,54 @@ export class MockApi implements PelaApi {
     return { ...clone(nearest), lat, lon };
   }
 
+  async getDanubeStations() {
+    const { DANUBE_STATIONS } = await import("./mock-danube");
+    return clone(DANUBE_STATIONS);
+  }
+
+  async getDanubeLags(source?: string) {
+    const { DANUBE_LAGS, DANUBE_LAGS_BY_SOURCE } = await import("./mock-danube");
+    const view = source ? DANUBE_LAGS_BY_SOURCE[source.toUpperCase()] : DANUBE_LAGS;
+    if (!view) throw new Error(`GET /danube/lags failed (422)`);
+    return clone(view);
+  }
+
+  async getDanubeAnomalies() {
+    const { DANUBE_ANOMALIES } = await import("./mock-danube");
+    return clone(DANUBE_ANOMALIES);
+  }
+
+  async getScenarioDatasets() {
+    const { SCENARIO_DATASETS } = await import("./mock-danube");
+    return clone(SCENARIO_DATASETS);
+  }
+
+  async getIskarSeries() {
+    const { ISKAR_SERIES } = await import("./mock-danube");
+    return clone(ISKAR_SERIES);
+  }
+
+  /** Same rules as the backend: inside the shared window and on a day with a value; the handoff does not depend on the day. */
+  async createIskarEvent(stationId: string, scenarioDate: string) {
+    const { ISKAR_EVENTS, ISKAR_SERIES } = await import("./mock-danube");
+    const { from, to } = ISKAR_SERIES.shared_window;
+    const st = ISKAR_SERIES.stations.find((s) => s.station.station_id === stationId);
+    const row = st?.series.find((r) => r.date === scenarioDate);
+    if (!from || !to || scenarioDate < from || scenarioDate > to || !row) throw new Error(`POST /scenario/tributaries/iskar/event failed (422)`);
+    const prev = st!.series.find((r) => r.date === shiftDay(scenarioDate, -1));
+    const ev = clone(Object.values(ISKAR_EVENTS)[0]!);
+    ev.event_id = `tie_ISKAR_${stationId}_${scenarioDate}`;
+    ev.observation = {
+      ...ev.observation,
+      station_id: stationId,
+      source_date: scenarioDate,
+      scenario_date: scenarioDate,
+      discharge_m3s: Math.round(row.discharge_m3s * 10) / 10,
+      change_24h_m3s: prev ? Math.round((row.discharge_m3s - prev.discharge_m3s) * 10) / 10 : null,
+    };
+    return ev;
+  }
+
   mediaUrl() {
     return null; // No real frames in the mock: always render the labelled placeholder.
   }
@@ -311,4 +359,8 @@ export class MockApi implements PelaApi {
   fileUrl(uri: string) {
     return uri;
   }
+}
+
+function shiftDay(date: string, days: number): string {
+  return new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 }

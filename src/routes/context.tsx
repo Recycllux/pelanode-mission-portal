@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AppShell } from "@/components/pn/AppShell";
 import { SourceChip } from "@/components/pn/chips";
+import { CompatibilityPanel } from "@/components/pn/CompatibilityPanel";
 import { ContextChart } from "@/components/pn/ContextChart";
 import { DANUBE_REPLAY_DATE, useDanubeGauges, useDanubePoint, useEvents, useMission, useMissionContext, useMissionTime, useTrack } from "@/hooks/use-mission";
 import { fmtDateUtc, fmtNum, fmtUtc, humanize } from "@/lib/pn-format";
@@ -50,6 +51,8 @@ function DatasetsPage() {
             Everything the portal shows next to PelaNode observations, with its source. Context values are associated with events by time and distance only; they do not explain them.
           </p>
         </div>
+
+        <CompatibilityPanel />
 
         <section className="space-y-3">
           <h2 className="text-sm font-bold uppercase tracking-wide">Mission context · {mission?.mission_id ?? "…"}</h2>

@@ -1,5 +1,5 @@
 import { AlertTriangle, Check, CircleDashed, Database, FlaskConical, ImageOff, PenLine, Radio, X } from "lucide-react";
-import type { Provenance } from "@/api/types";
+import type { CompatibilityState, Provenance, QualityClass } from "@/api/types";
 import { cn } from "@/lib/utils";
 import { LOW_CONFIDENCE, PROVENANCE_LABEL, REVIEW_LABEL, type ReviewTone } from "@/lib/pn-format";
 
@@ -80,4 +80,43 @@ export function ConfidenceText({ value }: { value: number }) {
       {low && <span className="ml-1 text-xs font-medium">(low confidence)</span>}
     </span>
   );
+}
+
+/** Common 2025 scenario timeline badge (P0-19 §4.7): harmonised records are historical, never 2025 measurements. */
+export function ScenarioBadge({ label = "SCENARIO 2025 / SOURCE HISTORICAL", className }: { label?: string; className?: string }) {
+  return (
+    <span
+      title="Shown on the common 2025 scenario timeline for this hackathon demonstration. A harmonised record is a historical observation, not a 2025 measurement."
+      className={cn("inline-flex shrink-0 items-center gap-1 rounded border border-navy/30 bg-navy-soft px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-navy", className)}
+    >
+      {label}
+    </span>
+  );
+}
+
+const CLASS_STYLE: Record<QualityClass, string> = {
+  A: "border-teal/40 bg-teal-soft text-teal",
+  B: "border-attention/40 bg-attention-soft text-attention-foreground",
+  C: "border-review/40 bg-review-soft text-review",
+};
+
+/** Pair reliability class (demo tuning): A operational, B with caution, C not operational. */
+export function QualityChip({ cls, className }: { cls: QualityClass; className?: string }) {
+  return (
+    <span title={cls === "A" ? "Operational" : cls === "B" ? "Operational with caution" : "Not operational"} className={cn("inline-flex h-5 min-w-5 items-center justify-center rounded border px-1 text-[11px] font-bold", CLASS_STYLE[cls], className)}>
+      {cls}
+    </span>
+  );
+}
+
+const STATE_STYLE: Record<CompatibilityState, string> = {
+  DEMONSTRATED: "border-teal/40 bg-teal-soft text-teal",
+  "SCENARIO-ALIGNED": "border-attention/40 bg-attention-soft text-attention-foreground",
+  "CONTEXT ONLY": "border-border bg-muted text-muted-foreground",
+  "OPTIONAL CONTEXT": "border-border bg-muted text-muted-foreground",
+  FUTURE: "border-sim-foreground/30 bg-sim/60 text-sim-foreground",
+};
+
+export function CompatibilityChip({ state, className }: { state: CompatibilityState; className?: string }) {
+  return <span className={cn("inline-flex shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide", STATE_STYLE[state], className)}>{state}</span>;
 }

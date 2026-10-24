@@ -16,6 +16,7 @@ import { Route as ContextRouteImport } from './routes/context'
 import { Route as DanubeRouteImport } from './routes/danube'
 import { Route as DualVisionRouteImport } from './routes/dual-vision'
 import { Route as NodesRouteImport } from './routes/nodes'
+import { Route as RiverRouteImport } from './routes/river'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
@@ -57,6 +58,11 @@ const NodesRoute = NodesRouteImport.update({
   path: '/nodes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RiverRoute = RiverRouteImport.update({
+  id: '/river',
+  path: '/river',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/danube': typeof DanubeRoute
   '/dual-vision': typeof DualVisionRoute
   '/nodes': typeof NodesRoute
+  '/river': typeof RiverRoute
   '/settings': typeof SettingsRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/reports/print': typeof ReportsPrintRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/danube': typeof DanubeRoute
   '/dual-vision': typeof DualVisionRoute
   '/nodes': typeof NodesRoute
+  '/river': typeof RiverRoute
   '/settings': typeof SettingsRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/reports/print': typeof ReportsPrintRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/danube': typeof DanubeRoute
   '/dual-vision': typeof DualVisionRoute
   '/nodes': typeof NodesRoute
+  '/river': typeof RiverRoute
   '/settings': typeof SettingsRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/reports/print': typeof ReportsPrintRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/danube'
     | '/dual-vision'
     | '/nodes'
+    | '/river'
     | '/settings'
     | '/events/$eventId'
     | '/reports/print'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/danube'
     | '/dual-vision'
     | '/nodes'
+    | '/river'
     | '/settings'
     | '/events/$eventId'
     | '/reports/print'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/danube'
     | '/dual-vision'
     | '/nodes'
+    | '/river'
     | '/settings'
     | '/events/$eventId'
     | '/reports/print'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   DanubeRoute: typeof DanubeRoute
   DualVisionRoute: typeof DualVisionRoute
   NodesRoute: typeof NodesRoute
+  RiverRoute: typeof RiverRoute
   SettingsRoute: typeof SettingsRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   ReportsPrintRoute: typeof ReportsPrintRoute
@@ -237,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NodesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/river': {
+      id: '/river'
+      path: '/river'
+      fullPath: '/river'
+      preLoaderRoute: typeof RiverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   DanubeRoute: DanubeRoute,
   DualVisionRoute: DualVisionRoute,
   NodesRoute: NodesRoute,
+  RiverRoute: RiverRoute,
   SettingsRoute: SettingsRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   ReportsPrintRoute: ReportsPrintRoute,

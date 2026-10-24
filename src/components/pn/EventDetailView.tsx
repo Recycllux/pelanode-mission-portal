@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { DanubePointClimate, Event, ReviewAction } from "@/api/types";
 import { useDanubePoint, useEvent, useEvents, useReviewEvent } from "@/hooks/use-mission";
 import { cn } from "@/lib/utils";
-import { RELATION_LABEL, fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, eventTitle, perspectiveLabel, reviewTone, systemSummary, uuid } from "@/lib/pn-format";
+import { eventTitle, fmtCoord, fmtDateUtc, fmtNum, fmtUtc, humanize, perspectiveLabel, RELATION_LABEL, reviewTone, stationName, systemSummary, uuid, windowText } from "@/lib/pn-format";
 import { ConfidenceText, EventGlyph, ReviewBadge, SourceChip } from "./chips";
 import { EvidenceFrame } from "./EvidenceFrame";
 
@@ -128,6 +128,19 @@ function RealPointData({ lat, lon }: { lat: number; lon: number }) {
           </div>
           {g.forecastable && (
             <Link to="/danube" className="no-print mt-2 inline-block text-xs font-semibold text-teal underline-offset-4 hover:underline">6-day forecast for this gauge →</Link>
+          )}
+          {g.downstream_windows && g.downstream_windows.length > 0 && (
+            <div className="mt-2 border-t pt-2 text-xs">
+              <div className="font-semibold">Downstream monitoring window from {g.station.name}</div>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {g.downstream_windows.map((w) => (
+                  <span key={w.station_id} className="rounded border px-1.5 py-0.5 tabular">
+                    {stationName(w.station_id)} {windowText(w.window_days)} ({w.quality_class})
+                  </span>
+                ))}
+              </div>
+              <p className="mt-1 italic text-muted-foreground">Estimated from historical hydrological signal propagation (organiser data 2021). Not a pollutant travel time.</p>
+            </div>
           )}
         </div>
       )}
