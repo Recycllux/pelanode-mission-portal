@@ -104,7 +104,7 @@ function MissionMapPage() {
     <AppShell screen="Mission Map" fill>
       <div className="flex h-full flex-col">
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          <div className="relative isolate h-[60svh] min-h-[340px] min-w-0 lg:h-auto lg:min-h-0 lg:flex-1">
+          <div className="relative isolate h-[calc(100svh-150px)] min-h-[340px] min-w-0 lg:h-auto lg:min-h-0 lg:flex-1">
             <LazyMap initialBbox={mission?.area_bbox} track={track} route={route} events={events} datasets={ctx?.datasets} gauges={gaugesQ.isError ? [] : gaugesQ.data?.points} gaugeDate={DANUBE_REPLAY_DATE} latest={latest} layers={layers} selectedId={selectedId} focus={focus} onSelectEvent={select} />
 
             <div className="absolute left-12 top-2.5 z-[500] max-h-[calc(100%-1.25rem)] w-[min(16rem,calc(100%-3.75rem))] overflow-y-auto rounded-lg border bg-card/95 p-3 shadow-lg backdrop-blur sm:left-14 sm:top-3 sm:w-64">

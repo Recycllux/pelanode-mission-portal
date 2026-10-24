@@ -120,5 +120,5 @@ npm run dev
 ### Offline basemap
 The maps draw a vector basemap (land, borders, rivers, lakes, roads, towns from Natural Earth, public domain)
 under the OpenStreetMap tiles, so they stay readable where tiles can't load. It lives in
-`src/data/danube-basemap.json` (loaded as its own lazy chunk); rebuild it with `python3 scripts/build_basemap.py <natural-earth-geojson-dir>`.
+`src/data/danube-basemap.json` (1:10m, Danube basin) over `src/data/world-basemap.json` (1:50m, whole world), each loaded as its own lazy chunk; rebuild it with `python3 scripts/build_basemap.py <natural-earth-geojson-dir>`.
 Set `VITE_MAP_TILES=off` to skip the OSM tiles entirely (for previews where external images are blocked).
