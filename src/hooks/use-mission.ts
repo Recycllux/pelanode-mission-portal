@@ -27,6 +27,11 @@ export function useMission() {
   });
 }
 
+/** Whole planned route (drawn before and during the replay). */
+export function useRoute() {
+  return useQuery({ queryKey: ["route", MISSION_ID], queryFn: () => api().getRoute(MISSION_ID), staleTime: Infinity });
+}
+
 export function useTrack() {
   const until = useMissionTime();
   return useQuery({

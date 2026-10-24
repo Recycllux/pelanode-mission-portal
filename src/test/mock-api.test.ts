@@ -29,6 +29,12 @@ describe("MockApi replay", () => {
     expect(await api.getTrack(M, FAR)).toHaveLength(43);
   });
 
+  it("route is whole before the replay starts", async () => {
+    const { api } = setup();
+    expect((await api.getTrack(M, FAR)).length).toBeLessThanOrEqual(1);
+    expect(await api.getRoute(M)).toHaveLength(43);
+  });
+
   it("only shows data at or before mission time", async () => {
     const { api } = setup();
     await api.controlReplay(M, { action: "seek", to: "2026-10-24T14:37:00.000Z" });

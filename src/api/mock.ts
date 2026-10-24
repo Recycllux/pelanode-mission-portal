@@ -122,6 +122,11 @@ export class MockApi implements PelaApi {
     return clone(this.track.filter((p) => Date.parse(p.captured_at) <= u));
   }
 
+  async getRoute(_id: string) {
+    await this.delay();
+    return clone(this.track);
+  }
+
   async listEvents(_missionId: string, until: string) {
     await this.delay();
     const u = Math.min(Date.parse(until), this.missionMs());

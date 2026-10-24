@@ -29,6 +29,8 @@ export interface PelaApi {
   readonly kind: "http" | "mock";
   getMission(id: string): Promise<MissionDetail>;
   getTrack(id: string, until: string): Promise<TrackPoint[]>;
+  /** Whole planned route, independent of replay time. */
+  getRoute(id: string): Promise<TrackPoint[]>;
   listEvents(missionId: string, until: string): Promise<EventSummary[]>;
   getEvent(id: string): Promise<Event>;
   reviewEvent(id: string, body: ReviewRequest): Promise<ReviewResponse>;

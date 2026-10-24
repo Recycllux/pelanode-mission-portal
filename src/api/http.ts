@@ -58,6 +58,7 @@ export class HttpApi implements PelaApi {
 
   getMission = (id: string) => this.get<MissionDetail>(`/missions/${enc(id)}`);
   getTrack = (id: string, until: string) => this.get<TrackPoint[]>(`/missions/${enc(id)}/track?until=${enc(until)}`);
+  getRoute = (id: string) => this.get<TrackPoint[]>(`/missions/${enc(id)}/route`);
   listEvents = (missionId: string, until: string) =>
     this.get<EventSummary[]>(`/events?mission_id=${enc(missionId)}&until=${enc(until)}`);
   getEvent = (id: string) => this.get<Event>(`/events/${enc(id)}`);
