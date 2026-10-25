@@ -95,6 +95,17 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        {/* Map tile tone (styles.css .pn-muted-tiles): muted greys, but water keeps its blue so the Danube reads as water. */}
+        <svg aria-hidden width="0" height="0" style={{ position: "absolute" }}>
+          <filter id="pn-tile-tone" colorInterpolationFilters="sRGB">
+            <feColorMatrix in="SourceGraphic" type="saturate" values="0.15" result="grey" />
+            {/* Blue excess (B − R, clamped at 0) is found only in water in the OSM palette: less red, more blue there. */}
+            <feColorMatrix in="SourceGraphic" type="matrix" values="0.9 0 -0.9 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0 1" result="mask" />
+            <feComposite in="grey" in2="mask" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" result="tinted" />
+            <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  -0.2 0 0.2 0 0  -1 0 1 0 0  0 0 0 1 0" result="blue" />
+            <feComposite in="tinted" in2="blue" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+          </filter>
+        </svg>
         {children}
         <Scripts />
       </body>
