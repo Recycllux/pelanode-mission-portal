@@ -2,6 +2,9 @@
 // Data (lazy chunks, built from Natural Earth by scripts/build_basemap.py):
 //   src/data/world-basemap.json   1:50m, whole world, so the map never ends at the basin's edge
 //   src/data/danube-basemap.json  1:10m, Danube basin, drawn on top with roads and more towns
+//   src/data/danube-water.json    the lower Danube's water surface (OpenStreetMap riverbanks via Overture Maps,
+//                                 scripts/build_danube_water.py); Natural Earth's centre line, up to 1-2 km off,
+//                                 is cut back to the stretch upstream of it
 // Where tiles load they cover it; where they can't (offline, sandboxed previews) the map keeps
 // land, borders, rivers, lakes, roads and towns.
 import L from "leaflet";
@@ -9,12 +12,12 @@ import { useEffect, useState } from "react";
 import { useMap } from "react-leaflet";
 
 type Feature = GeoJSON.Feature<GeoJSON.Geometry, { layer: string; name?: string; rank?: number; major?: boolean; capital?: boolean }>;
-type Level = "world" | "detail";
+type Level = "world" | "detail" | "water";
 
 const cache: Partial<Record<Level, Promise<Feature[]>>> = {};
 function loadBasemap(level: Level) {
   // A lazy import (not fetch) so it loads wherever the app's own scripts do, including sandboxed previews.
-  cache[level] ??= (level === "world" ? import("@/data/world-basemap.json") : import("@/data/danube-basemap.json"))
+  cache[level] ??= (level === "world" ? import("@/data/world-basemap.json") : level === "detail" ? import("@/data/danube-basemap.json") : import("@/data/danube-water.json"))
     .then((m) => (m.default as unknown as { features: Feature[] }).features)
     .catch(() => []);
   return cache[level]!;
@@ -24,6 +27,8 @@ function loadBasemap(level: Level) {
 export const TILES_ENABLED = (import.meta.env["VITE_MAP_TILES"] as string | undefined)?.trim().toLowerCase() !== "off";
 
 const LAND = "#f5f3ee";
+const DANUBE = new Set(["Danube", "Donau"]);
+const PANE_Z: Record<Level, string> = { world: "140", detail: "150", water: "160" };
 
 const style = (f: Feature | undefined, level: Level): L.PathOptions => {
   const p = f?.properties;
@@ -35,8 +40,11 @@ const style = (f: Feature | undefined, level: Level): L.PathOptions => {
       return { color: "#a8a29e", weight: 1, dashArray: "4 3" };
     case "lake":
       return { stroke: false, fillColor: "#b9d7ea", fillOpacity: 1 };
+    case "water":
+      // The outline keeps the river a visible line when zoomed out; zoomed in it reads as water.
+      return { color: "#7fb3d5", weight: 2, fillColor: "#9ecae6", fillOpacity: 1 };
     case "river":
-      return { color: "#7fb3d5", weight: p.name === "Danube" ? 4 : (p.rank ?? 9) <= 6 ? 2 : 1.2, opacity: 1 };
+      return { color: "#7fb3d5", weight: DANUBE.has(p.name ?? "") ? 4 : (p.rank ?? 9) <= 6 ? 2 : 1.2, opacity: 1 };
     case "road":
       return { color: p.major ? "#e2b07a" : "#d6d3d1", weight: p.major ? 1.6 : 1, opacity: 0.9 };
     default:
@@ -48,7 +56,7 @@ const ORDER = ["country", "lake", "border", "road", "river"];
 
 function addLevel(map: L.Map, level: Level, features: Feature[]) {
   const pane = `pn-basemap-${level}`;
-  if (!map.getPane(pane)) map.createPane(pane).style.zIndex = level === "world" ? "140" : "150";
+  if (!map.getPane(pane)) map.createPane(pane).style.zIndex = PANE_Z[level];
   if (!map.getPane("pn-basemap-labels")) map.createPane("pn-basemap-labels").style.zIndex = "390";
   const renderer = L.canvas({ pane });
   const shapes = L.geoJSON(
@@ -91,7 +99,7 @@ export function VectorBasemap() {
   const [levels, setLevels] = useState<Partial<Record<Level, Feature[]>>>({});
   useEffect(() => {
     let live = true;
-    for (const level of ["world", "detail"] as const) void loadBasemap(level).then((f) => live && setLevels((s) => ({ ...s, [level]: f })));
+    for (const level of ["world", "detail", "water"] as const) void loadBasemap(level).then((f) => live && setLevels((s) => ({ ...s, [level]: f })));
     return () => {
       live = false;
     };
@@ -108,6 +116,17 @@ export function VectorBasemap() {
   }, [levels.world, map]);
 
   useEffect(() => (levels.detail?.length ? addLevel(map, "detail", levels.detail) : undefined), [levels.detail, map]);
+
+  useEffect(() => {
+    if (!levels.water?.length) return;
+    // With tiles on, their attribution already credits OpenStreetMap.
+    if (!TILES_ENABLED) map.attributionControl?.addAttribution("© OpenStreetMap contributors");
+    const off = addLevel(map, "water", levels.water);
+    return () => {
+      if (!TILES_ENABLED) map.attributionControl?.removeAttribution("© OpenStreetMap contributors");
+      off();
+    };
+  }, [levels.water, map]);
 
   return null;
 }

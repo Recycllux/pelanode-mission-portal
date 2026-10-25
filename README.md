@@ -121,4 +121,7 @@ npm run dev
 The maps draw a vector basemap (land, borders, rivers, lakes, roads, towns from Natural Earth, public domain)
 under the OpenStreetMap tiles, so they stay readable where tiles can't load. It lives in
 `src/data/danube-basemap.json` (1:10m, Danube basin) over `src/data/world-basemap.json` (1:50m, whole world), each loaded as its own lazy chunk; rebuild it with `python3 scripts/build_basemap.py <natural-earth-geojson-dir>`.
+Natural Earth's Danube line is up to 1-2 km off, so from the Iron Gates to the delta the river is drawn as its water
+surface instead (OpenStreetMap riverbanks via Overture Maps, `src/data/danube-water.json`); rebuild it after the basemap with
+`python3 scripts/build_danube_water.py` (needs `pyarrow` and `shapely`).
 Set `VITE_MAP_TILES=off` to skip the OSM tiles entirely (for previews where external images are blocked).
